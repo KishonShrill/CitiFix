@@ -1,4 +1,7 @@
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { auditLog } from "@/lib/report-schema";
+import { nanoid } from "nanoid";
 
 export async function getCurrentUser(request: Request) {
     const session = await auth.api.getSession({
@@ -59,4 +62,26 @@ export async function requireRole(
     }
 
     return user;
+}
+
+/**
+ * Write an immutable audit log entry for a moderation or system action.
+ */
+export async function createAuditLog(
+    actor: string,
+    action: string,
+    resourceType: string,
+    resourceId: string,
+    changes?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
+) {
+    await db.insert(auditLog).values({
+        id: nanoid(),
+        actor,
+        action,
+        resourceType,
+        resourceId,
+        changes: changes ?? null,
+        metadata: metadata ?? null,
+    });
 }

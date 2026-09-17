@@ -80,6 +80,8 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
 }));
 
+// Note: Reports relation is defined in lib/report-schema.ts to avoid circular dependency
+
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
     fields: [session.userId],
