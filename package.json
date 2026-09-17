@@ -1,0 +1,39 @@
+{
+  "name": "cityfix",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.16.0",
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.116.0",
+    "@vinext/cloudflare": "^1.0.0-beta.8",
+    "better-auth": "^1.6.33",
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-server-dom-webpack": "^19.3.0",
+    "vinext": "^1.0.0-beta.10"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.54.11",
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-rsc": "^0.5.35",
+    "drizzle-kit": "^0.31.10",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vite": "^8.3.0",
+    "wrangler": "^4.133.0"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "start": "wrangler dev --config dist/server/wrangler.json",
+    "deploy": "vinext-cloudflare deploy --config dist/server/wrangler.json"
+  }
+}
