@@ -1,11 +1,13 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { report, category, problemType, media } from "@/lib/report-schema";
 import { sendSuccess, sendError, sendPaginated, parsePagination } from "@/app/api/_lib/http";
 import { getCurrentUser, requireUser } from "@/app/api/_lib/api-guard";
 import { nanoid } from "nanoid";
 import { eq, and, desc, sql } from "drizzle-orm";
 
+
 export async function GET(request: Request) {
+    const db = getDB();
     const url = new URL(request.url);
     const { limit, offset } = parsePagination(url, 50, 100);
 
@@ -103,7 +105,9 @@ export async function GET(request: Request) {
 }
 
 // POST /api/v1/reports - Create a new report (authenticated)
+
 export async function POST(request: Request) {
+    const db = getDB();
     const user = await requireUser(request);
 
     const body = await request.json();
