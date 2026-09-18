@@ -1,8 +1,9 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { report, category, problemType, media } from "@/lib/report-schema";
 import { requireRole } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { eq } from "drizzle-orm";
+
 
 export async function GET(
     request: Request,

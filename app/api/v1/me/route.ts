@@ -1,7 +1,9 @@
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { sendError } from "@api/_lib/http";
 
 export async function GET(request: Request) {
+    const auth = getAuth();
+
     const session = await auth.api.getSession({
         headers: request.headers,
     });

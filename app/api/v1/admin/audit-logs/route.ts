@@ -1,10 +1,12 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { auditLog } from "@/lib/report-schema";
 import { requireRole } from "@/app/api/_lib/api-guard";
 import { sendPaginated, parsePagination } from "@/app/api/_lib/http";
 import { eq, desc, and, sql } from "drizzle-orm";
 
+
 export async function GET(request: Request) {
+    const db = getDB();
     await requireRole(request, ["admin"]); // Usually only admin can view audit logs, maybe moderator too
 
     const url = new URL(request.url);

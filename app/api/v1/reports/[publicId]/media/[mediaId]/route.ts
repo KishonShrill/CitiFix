@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { report, media } from "@/lib/report-schema";
 import { requireUser } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
@@ -10,6 +10,7 @@ cloudinary.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 
 export async function DELETE(
     request: Request,

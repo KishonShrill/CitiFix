@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { report } from "@/lib/report-schema";
 import { requireRole, createAuditLog } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 const VALID_STATUSES = ["submitted", "under_review", "verified", "rejected", "duplicate", "resolved", "hidden"] as const;
 
 // POST /api/v1/admin/reports/[id]/status
+
 export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }

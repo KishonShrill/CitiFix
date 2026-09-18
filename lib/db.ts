@@ -11,10 +11,16 @@ if (!DATABASE_URL) {
     throw new Error("DATABASE_URL is not defined");
 }
 
-// Disable prefetch as it is not supported for "Transaction" pool mode
-const client = postgres(DATABASE_URL, { prepare: false })
+const schema = { ...authSchema, ...reportSchema };
 
-export const db = drizzle(client, { schema: { ...authSchema, ...reportSchema } });
+export function getDB() {
+    const client = postgres(DATABASE_URL as string, {
+        prepare: false,
+        max: 1,
+        idle_timeout: 1
+    });
 
-// Re-export schemas for convenience
+    return drizzle(client, { schema });
+}
+
 export { authSchema, reportSchema };

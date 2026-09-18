@@ -1,9 +1,11 @@
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { getAuth } from "@/lib/auth";
+import { getDB } from "@/lib/db";
 import { auditLog } from "@/lib/report-schema";
 import { nanoid } from "nanoid";
 
+
 export async function getCurrentUser(request: Request) {
+    const auth = getAuth();
     const session = await auth.api.getSession({
         headers: request.headers,
     });
@@ -75,6 +77,7 @@ export async function createAuditLog(
     changes?: Record<string, unknown>,
     metadata?: Record<string, unknown>
 ) {
+    const db = getDB();
     await db.insert(auditLog).values({
         id: nanoid(),
         actor,

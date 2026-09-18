@@ -1,10 +1,11 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { report, category, problemType } from "@/lib/report-schema";
 import { requireUser } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { eq, and } from "drizzle-orm";
 
 // GET /api/v1/me/reports/[publicId] - Get one of the user's reports
+
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ publicId: string }> }
@@ -50,6 +51,7 @@ export async function GET(
 }
 
 // PATCH /api/v1/me/reports/[publicId] - Edit own report (only if submitted)
+
 export async function PATCH(
     request: Request,
     { params }: { params: Promise<{ publicId: string }> }
@@ -105,6 +107,7 @@ export async function PATCH(
 }
 
 // DELETE /api/v1/me/reports/[publicId] - Withdraw own report (only if submitted)
+
 export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ publicId: string }> }
