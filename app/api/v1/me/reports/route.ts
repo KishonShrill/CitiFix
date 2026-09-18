@@ -1,10 +1,12 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { report, category, problemType } from "@/lib/report-schema";
 import { requireUser } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError, sendPaginated, parsePagination } from "@/app/api/_lib/http";
 import { eq, desc, sql } from "drizzle-orm";
 
+
 export async function GET(request: Request) {
+    const db = getDB();
     const user = await requireUser(request);
     const url = new URL(request.url);
     const { limit, offset } = parsePagination(url, 20, 100);

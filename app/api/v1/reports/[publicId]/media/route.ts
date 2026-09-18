@@ -1,9 +1,10 @@
-import { db } from "@/lib/db";
+import { getDB } from "@/lib/db";
 import { report, media } from "@/lib/report-schema";
 import { requireUser } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { nanoid } from "nanoid";
 import { eq, and, asc } from "drizzle-orm";
+
 
 export async function GET(
     request: Request,
@@ -20,6 +21,7 @@ export async function GET(
 
     return sendSuccess(reportMedia);
 }
+
 
 export async function POST(
     request: Request,
