@@ -29,4 +29,7 @@ export default defineConfig({
             '@': path.resolve(import.meta.dirname, '.'),
         },
     },
+    optimizeDeps: {
+        exclude: ["maplibre-gl", "react-map-gl"],
+    },
 });
