@@ -1,181 +1,213 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MapContainer } from "@/components/map/MapContainer";
+import { ReportModal } from "@/components/reports/ReportModal";
+import { ReportSlideOut } from "@/components/reports/ReportSlideOut";
+import { UserDashboard } from "@/components/dashboard/UserDashboard";
+import { AdminQueue } from "@/components/admin/AdminQueue";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { useReports, useReport } from "@/hooks/useReports";
 import { authClient } from "@/lib/auth-client";
+import { Plus } from "lucide-react";
 
 export default function Home() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [name, setName] = useState("");
+  const [mapBounds, setMapBounds] = useState<{
+    minLat: number;
+    maxLat: number;
+    minLng: number;
+    maxLng: number;
+  } | null>(null);
 
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isUserDashboardOpen, setIsUserDashboardOpen] = useState(false);
+  const [isAdminQueueOpen, setIsAdminQueueOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string | null; email: string; role?: string } | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-    const signUp = async () => {
-        setLoading(true);
-        setMessage("");
-
-        const { data, error } = await authClient.signUp.email({
-            email,
-            password,
-            name,
-        });
-
-        setLoading(false);
-
-        if (error) {
-            setMessage(error.message ?? "Sign up failed");
-            return;
+  const { data: reportsData, isLoading: reportsLoading } = useReports(
+    mapBounds
+      ? {
+          minLat: mapBounds.minLat,
+          maxLat: mapBounds.maxLat,
+          minLng: mapBounds.minLng,
+          maxLng: mapBounds.maxLng,
         }
+      : undefined
+  );
 
-        setMessage(`Signed up as ${data?.user?.email} `);
+  const { data: selectedReport } = useReport(selectedReportId || "");
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await authClient.getSession();
+      if (session.data?.user) {
+        setUser(session.data.user as typeof user);
+      }
+      setIsCheckingAuth(false);
     };
 
-    const signIn = async () => {
-        setLoading(true);
-        setMessage("");
+    checkSession();
+  }, []);
 
-        const { data, error } = await authClient.signIn.email({
-            email,
-            password,
-        });
-
-        setLoading(false);
-
-        if (error) {
-            setMessage(error.message ?? "Sign in failed");
-            return;
+  // Get user's geolocation on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([position.coords.longitude, position.coords.latitude]);
+        },
+        (error) => {
+          console.log("Geolocation error:", error);
+          // Default to Iligan City if geolocation fails
+          setUserLocation([124.24, 8.24]);
         }
+      );
+    }
+  }, []);
 
-        setMessage(`Signed in as ${data?.user?.email} `);
-    };
+  const handleOpenReportModal = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!userLocation) {
+      alert("Unable to determine location. Please enable geolocation.");
+      return;
+    }
+    setIsReportModalOpen(true);
+  };
 
-    const signOut = async () => {
-        setLoading(true);
-        setMessage("");
-
-        const { error } = await authClient.signOut();
-
-        setLoading(false);
-
-        if (error) {
-            setMessage(error.message ?? "Sign out failed");
-            return;
-        }
-
-        setMessage("Signed out successfully");
-    };
-
+  if (isCheckingAuth) {
     return (
-        <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-950">
-            <section className="mx-auto flex max-w-xl flex-col gap-8">
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-orange-600">
-                        Better Auth Test
-                    </p>
-
-                    <h1 className="mt-2 text-4xl font-semibold">
-                        Authentication
-                    </h1>
-
-                    <p className="mt-3 text-slate-600">
-                        Test sign up, sign in, and sign out.
-                    </p>
-                </div>
-
-                <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                    <div className="flex flex-col gap-4">
-                        <div>
-                            <label
-                                htmlFor="name"
-                                className="mb-1 block text-sm font-medium"
-                            >
-                                Name
-                            </label>
-
-                            <input
-                                id="name"
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-orange-500"
-                                placeholder="CJ"
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="email"
-                                className="mb-1 block text-sm font-medium"
-                            >
-                                Email
-                            </label>
-
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-orange-500"
-                                placeholder="you@example.com"
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                htmlFor="password"
-                                className="mb-1 block text-sm font-medium"
-                            >
-                                Password
-                            </label>
-
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-orange-500"
-                                placeholder="••••••••"
-                            />
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                            <button
-                                type="button"
-                                onClick={signUp}
-                                disabled={loading}
-                                className="rounded-md bg-orange-600 px-4 py-2 font-medium text-white hover:bg-orange-700 disabled:opacity-50"
-                            >
-                                Sign Up
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={signIn}
-                                disabled={loading}
-                                className="rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-800 disabled:opacity-50"
-                            >
-                                Sign In
-                            </button>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={signOut}
-                            disabled={loading}
-                            className="rounded-md border border-slate-300 px-4 py-2 font-medium hover:bg-slate-100 disabled:opacity-50"
-                        >
-                            Sign Out
-                        </button>
-
-                        {message && (
-                            <div className="rounded-md bg-slate-100 p-3 text-sm">
-                                {message}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </section>
-        </main>
+      <div className="w-full h-screen flex items-center justify-center bg-slate-50">
+        <p className="text-slate-600">Loading...</p>
+      </div>
     );
+  }
+
+  return (
+    <main className="relative w-full h-screen overflow-hidden">
+      {/* Map */}
+      {userLocation && (
+        <MapContainer
+          reports={reportsData?.data || []}
+          selectedReportId={selectedReportId || undefined}
+          onReportSelect={setSelectedReportId}
+          onBoundsChange={setMapBounds}
+          center={userLocation}
+          zoom={13}
+        />
+      )}
+
+      {/* Top Bar */}
+      <div className="absolute top-0 left-0 right-0 bg-white shadow-sm z-30 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+            B
+          </div>
+          <h1 className="font-bold text-slate-900">BetterIligan</h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenReportModal}
+            className="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+          >
+            <Plus size={16} />
+            Report Issue
+          </button>
+
+          {user ? (
+            <UserMenu
+              onMyReportsClick={() => setIsUserDashboardOpen(true)}
+              onAdminClick={() => setIsAdminQueueOpen(true)}
+            />
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="px-3 py-2 text-slate-900 border border-slate-300 rounded-md hover:bg-slate-50 text-sm font-medium"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Loading indicator */}
+      {reportsLoading && (
+        <div className="absolute top-16 left-4 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20">
+          Loading reports...
+        </div>
+      )}
+
+      {/* Report count */}
+      {reportsData && (
+        <div className="absolute top-16 right-4 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20">
+          {reportsData.data.length} report{reportsData.data.length !== 1 ? "s" : ""} visible
+        </div>
+      )}
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        latitude={userLocation?.[1]}
+        longitude={userLocation?.[0]}
+      />
+
+      {/* Report Slide Out */}
+      {selectedReport && (
+        <ReportSlideOut
+          report={selectedReport}
+          isOpen={!!selectedReportId}
+          onClose={() => setSelectedReportId(null)}
+        />
+      )}
+
+      {/* User Dashboard */}
+      <UserDashboard
+        isOpen={isUserDashboardOpen}
+        onClose={() => setIsUserDashboardOpen(false)}
+        onReportSelect={(id) => {
+          setSelectedReportId(id);
+          setIsUserDashboardOpen(false);
+        }}
+      />
+
+      {/* Admin Queue */}
+      {user && (user.role === "admin" || user.role === "moderator") && (
+        <AdminQueue
+          isOpen={isAdminQueueOpen}
+          onClose={() => setIsAdminQueueOpen(false)}
+          reports={reportsData?.data || []}
+          isLoading={reportsLoading}
+          onVerify={async (reportId) => {
+            // This will be implemented with actual API calls
+            console.log("Verify:", reportId);
+          }}
+          onReject={async (reportId, reason) => {
+            console.log("Reject:", reportId, reason);
+          }}
+          onDuplicate={async (reportId) => {
+            console.log("Duplicate:", reportId);
+          }}
+        />
+      )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          window.location.reload();
+        }}
+      />
+    </main>
+  );
 }
