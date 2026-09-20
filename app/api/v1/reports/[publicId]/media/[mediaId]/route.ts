@@ -18,7 +18,7 @@ export async function DELETE(
 ) {
     const user = await requireUser(request);
     const { publicId, mediaId } = await params;
-
+    const db = getDB();
     // First find the report to check ownership
     const [foundReport] = await db
         .select()

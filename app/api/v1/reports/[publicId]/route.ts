@@ -9,7 +9,7 @@ export async function GET(
     { params }: { params: Promise<{ publicId: string }> }
 ) {
     const { publicId } = await params;
-
+    const db = getDB();
     const [foundReport] = await db
         .select({
             id: report.id,

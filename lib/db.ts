@@ -14,10 +14,12 @@ if (!DATABASE_URL) {
 const schema = { ...authSchema, ...reportSchema };
 
 export function getDB() {
+    // For Cloudflare Workers, create a fresh client per request to avoid I/O context issues
     const client = postgres(DATABASE_URL as string, {
         prepare: false,
         max: 1,
-        idle_timeout: 1
+        idle_timeout: 10,
+        max_lifetime: 60,
     });
 
     return drizzle(client, { schema });

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Report } from "@/lib/api/reports";
+import type { Report } from "@/lib/api/reports";
 
 interface MapContainerProps {
     reports: Report[];
@@ -24,8 +24,8 @@ export function MapContainer({
     selectedReportId,
     onReportSelect,
     onBoundsChange,
-    center = [124.24, 8.24], // Iligan City coordinates
-    zoom = 13,
+    center = [124.2452, 8.228], // Iligan City coordinates
+    zoom = 16,
 }: MapContainerProps) {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);

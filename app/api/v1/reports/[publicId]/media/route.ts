@@ -11,7 +11,7 @@ export async function GET(
     { params }: { params: Promise<{ publicId: string }> }
 ) {
     const { publicId } = await params;
-
+    const db = getDB();
     // Optional: Could verify report exists first, but a simple query to media works too
     const reportMedia = await db
         .select()
@@ -29,7 +29,7 @@ export async function POST(
 ) {
     const user = await requireUser(request);
     const { publicId } = await params;
-
+    const db = getDB();
     // Verify report exists and belongs to user OR user is moderator/admin
     const [foundReport] = await db
         .select()
