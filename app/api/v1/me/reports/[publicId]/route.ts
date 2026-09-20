@@ -12,7 +12,7 @@ export async function GET(
 ) {
     const user = await requireUser(request);
     const { publicId } = await params;
-
+    const db = getDB();
     const [foundReport] = await db
         .select({
             id: report.id,
@@ -58,7 +58,7 @@ export async function PATCH(
 ) {
     const user = await requireUser(request);
     const { publicId } = await params;
-
+    const db = getDB();
     // Find the report and verify ownership
     const [foundReport] = await db
         .select()
@@ -114,7 +114,7 @@ export async function DELETE(
 ) {
     const user = await requireUser(request);
     const { publicId } = await params;
-
+    const db = getDB();
     const [foundReport] = await db
         .select()
         .from(report)

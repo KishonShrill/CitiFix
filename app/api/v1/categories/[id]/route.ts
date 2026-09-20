@@ -9,7 +9,7 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
-
+    const db = getDB();
     const [foundCategory] = await db
         .select()
         .from(category)

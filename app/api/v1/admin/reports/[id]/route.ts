@@ -13,7 +13,7 @@ export async function GET(
     await requireRole(request, ["moderator", "admin"]);
 
     const { id } = await params;
-
+    const db = getDB();
     // Get full report details with category and problem type
     const [foundReport] = await db
         .select({

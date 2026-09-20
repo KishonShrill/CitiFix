@@ -12,7 +12,7 @@ export async function POST(
 ) {
     const user = await requireRole(request, ["moderator", "admin"]);
     const { id } = await params;
-
+    const db = getDB();
     const [foundReport] = await db
         .select()
         .from(report)

@@ -3,153 +3,153 @@ import * as api from "@/lib/api/reports";
 
 // Categories
 export function useCategories() {
-  return useQuery({
-    queryKey: ["categories"],
-    queryFn: api.getCategories,
-  });
+    return useQuery({
+        queryKey: ["categories"],
+        queryFn: api.getCategories,
+    });
 }
 
 export function useCategory(id: string) {
-  return useQuery({
-    queryKey: ["category", id],
-    queryFn: () => api.getCategory(id),
-    enabled: !!id,
-  });
+    return useQuery({
+        queryKey: ["category", id],
+        queryFn: () => api.getCategory(id),
+        enabled: !!id,
+    });
 }
 
 // Problem Types
 export function useProblemTypes() {
-  return useQuery({
-    queryKey: ["problemTypes"],
-    queryFn: api.getProblemTypes,
-  });
+    return useQuery({
+        queryKey: ["problemTypes"],
+        queryFn: api.getProblemTypes,
+    });
 }
 
 export function useCategoryProblemTypes(categoryId: string) {
-  return useQuery({
-    queryKey: ["problemTypes", categoryId],
-    queryFn: () => api.getCategoryProblemTypes(categoryId),
-    enabled: !!categoryId,
-  });
+    return useQuery({
+        queryKey: ["problemTypes", categoryId],
+        queryFn: () => api.getCategoryProblemTypes(categoryId),
+        enabled: !!categoryId,
+    });
 }
 
 // Reports - Public
 export interface UseReportsParams {
-  minLat?: number;
-  maxLat?: number;
-  minLng?: number;
-  maxLng?: number;
-  categoryId?: string;
-  severity?: string;
-  barangay?: string;
-  limit?: number;
-  offset?: number;
+    minLat?: number;
+    maxLat?: number;
+    minLng?: number;
+    maxLng?: number;
+    categoryId?: string;
+    severity?: string;
+    barangay?: string;
+    limit?: number;
+    offset?: number;
 }
 
 export function useReports(params?: UseReportsParams) {
-  return useQuery({
-    queryKey: ["reports", params],
-    queryFn: () => api.getReports(params),
-    enabled: params?.minLat !== undefined && params?.maxLat !== undefined,
-  });
+    return useQuery({
+        queryKey: ["reports", params],
+        queryFn: () => api.getReports(params),
+        enabled: params?.minLat !== undefined && params?.maxLat !== undefined,
+    });
 }
 
 export function useReport(publicId: string) {
-  return useQuery({
-    queryKey: ["report", publicId],
-    queryFn: () => api.getReport(publicId),
-    enabled: !!publicId,
-  });
+    return useQuery({
+        queryKey: ["report", publicId],
+        queryFn: () => api.getReport(publicId),
+        enabled: !!publicId,
+    });
 }
 
 // Reports - User
 export function useUserReports(params?: Omit<UseReportsParams, "minLat" | "maxLat" | "minLng" | "maxLng">) {
-  return useQuery({
-    queryKey: ["userReports", params],
-    queryFn: () => api.getUserReports(params),
-  });
+    return useQuery({
+        queryKey: ["userReports", params],
+        queryFn: () => api.getUserReports(params),
+    });
 }
 
 export function useUserReport(publicId: string) {
-  return useQuery({
-    queryKey: ["userReport", publicId],
-    queryFn: () => api.getUserReport(publicId),
-    enabled: !!publicId,
-  });
+    return useQuery({
+        queryKey: ["userReport", publicId],
+        queryFn: () => api.getUserReport(publicId),
+        enabled: !!publicId,
+    });
 }
 
 // Mutations
 export function useCreateReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: api.createReport,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reports"] });
-      queryClient.invalidateQueries({ queryKey: ["userReports"] });
-    },
-  });
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: api.createReport,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+            queryClient.invalidateQueries({ queryKey: ["userReports"] });
+        },
+    });
 }
 
 export function useUpdateReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ publicId, data }: { publicId: string; data: Partial<api.CreateReportInput> }) =>
-      api.updateReport(publicId, data),
-    onSuccess: (_, { publicId }) => {
-      queryClient.invalidateQueries({ queryKey: ["report", publicId] });
-      queryClient.invalidateQueries({ queryKey: ["userReport", publicId] });
-      queryClient.invalidateQueries({ queryKey: ["reports"] });
-      queryClient.invalidateQueries({ queryKey: ["userReports"] });
-    },
-  });
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ publicId, data }: { publicId: string; data: Partial<api.CreateReportInput> }) =>
+            api.updateReport(publicId, data),
+        onSuccess: (_, { publicId }) => {
+            queryClient.invalidateQueries({ queryKey: ["report", publicId] });
+            queryClient.invalidateQueries({ queryKey: ["userReport", publicId] });
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+            queryClient.invalidateQueries({ queryKey: ["userReports"] });
+        },
+    });
 }
 
 export function useDeleteReport() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: api.deleteReport,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reports"] });
-      queryClient.invalidateQueries({ queryKey: ["userReports"] });
-    },
-  });
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: api.deleteReport,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+            queryClient.invalidateQueries({ queryKey: ["userReports"] });
+        },
+    });
 }
 
 // Media
 export function useUploadSignature(publicId: string) {
-  return useQuery({
-    queryKey: ["uploadSignature", publicId],
-    queryFn: () => api.getUploadSignature(publicId),
-    enabled: !!publicId,
-  });
+    return useQuery({
+        queryKey: ["uploadSignature", publicId],
+        queryFn: () => api.getUploadSignature(publicId),
+        enabled: !!publicId,
+    });
 }
 
 export function useRegisterMedia() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ publicId, cloudinaryPublicId, url }: { publicId: string; cloudinaryPublicId: string; url: string }) =>
-      api.registerMedia(publicId, cloudinaryPublicId, url),
-    onSuccess: (_, { publicId }) => {
-      queryClient.invalidateQueries({ queryKey: ["reportMedia", publicId] });
-    },
-  });
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ publicId, cloudinaryPublicId, url }: { publicId: string; cloudinaryPublicId: string; url: string }) =>
+            api.registerMedia(publicId, cloudinaryPublicId, url),
+        onSuccess: (_, { publicId }) => {
+            queryClient.invalidateQueries({ queryKey: ["reportMedia", publicId] });
+        },
+    });
 }
 
 export function useReportMedia(publicId: string) {
-  return useQuery({
-    queryKey: ["reportMedia", publicId],
-    queryFn: () => api.getReportMedia(publicId),
-    enabled: !!publicId,
-  });
+    return useQuery({
+        queryKey: ["reportMedia", publicId],
+        queryFn: () => api.getReportMedia(publicId),
+        enabled: !!publicId,
+    });
 }
 
 export function useDeleteMedia() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ publicId, mediaId }: { publicId: string; mediaId: string }) =>
-      api.deleteMedia(publicId, mediaId),
-    onSuccess: (_, { publicId }) => {
-      queryClient.invalidateQueries({ queryKey: ["reportMedia", publicId] });
-    },
-  });
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ publicId, mediaId }: { publicId: string; mediaId: string }) =>
+            api.deleteMedia(publicId, mediaId),
+        onSuccess: (_, { publicId }) => {
+            queryClient.invalidateQueries({ queryKey: ["reportMedia", publicId] });
+        },
+    });
 }

@@ -5,7 +5,10 @@ import * as schema from "./auth-schema";
 
 
 export function getAuth() {
+    // Create a fresh database connection for this request
+    // This is necessary for Cloudflare Workers to avoid I/O context isolation errors
     const db = getDB();
+
     return betterAuth({
         database: drizzleAdapter(db, {
             provider: "pg",

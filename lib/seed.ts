@@ -1,3 +1,10 @@
+import dotenv from "dotenv";
+import { config } from "dotenv";
+import { resolve } from "path";
+
+// Load .env before any other imports that depend on it
+config({ path: resolve(process.cwd(), ".env") });
+
 import { getDB } from "./db";
 import { category, problemType } from "./report-schema";
 import { nanoid } from "nanoid";
