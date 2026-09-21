@@ -88,8 +88,8 @@ export async function getProblemTypes(): Promise<ProblemType[]> {
 export async function getCategoryProblemTypes(categoryId: string): Promise<ProblemType[]> {
     const res = await fetch(`${API_BASE}/categories/${categoryId}/problem-types`);
     if (!res.ok) throw new Error("Failed to fetch problem types for category");
-    const json = (await res.json()) as SuccessResponse<ProblemType[]>;
-    return json.data;
+    const json = (await res.json()) as ProblemType[];
+    return json;
 }
 
 // Reports - Public

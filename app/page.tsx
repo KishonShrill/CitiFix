@@ -156,12 +156,14 @@ export default function Home() {
             )}
 
             {/* Report Modal */}
-            <ReportModal
-                isOpen={isReportModalOpen}
-                onClose={() => setIsReportModalOpen(false)}
-                latitude={userLocation?.[1]}
-                longitude={userLocation?.[0]}
-            />
+            {user && (
+                <ReportModal
+                    isOpen={isReportModalOpen}
+                    onClose={() => setIsReportModalOpen(false)}
+                    latitude={userLocation?.[1]}
+                    longitude={userLocation?.[0]}
+                />
+            )}
 
             {/* Report Slide Out */}
             {selectedReport && (
@@ -173,14 +175,16 @@ export default function Home() {
             )}
 
             {/* User Dashboard */}
-            <UserDashboard
-                isOpen={isUserDashboardOpen}
-                onClose={() => setIsUserDashboardOpen(false)}
-                onReportSelect={(id) => {
-                    setSelectedReportId(id);
-                    setIsUserDashboardOpen(false);
-                }}
-            />
+            {user && (
+                <UserDashboard
+                    isOpen={isUserDashboardOpen}
+                    onClose={() => setIsUserDashboardOpen(false)}
+                    onReportSelect={(id) => {
+                        setSelectedReportId(id);
+                        setIsUserDashboardOpen(false);
+                    }}
+                />
+            )}
 
             {/* Admin Queue */}
             {user && (user.role === "admin" || user.role === "moderator") && (

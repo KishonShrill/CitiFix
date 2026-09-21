@@ -32,8 +32,6 @@ export function ReportModal({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-    console.log(categories)
-
     const handleInputChange = (field: string, value: unknown) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
@@ -202,7 +200,10 @@ export function ReportModal({
                             <label className="block text-sm font-medium text-slate-900 mb-1">
                                 Attach Photos
                             </label>
-                            <div className="border-2 border-dashed border-slate-300 rounded-md p-4 text-center hover:border-orange-500 cursor-pointer">
+                            <div
+                                className="border-2 border-dashed border-slate-300 rounded-md p-4 text-center hover:border-orange-500 cursor-pointer"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
                                 <input
                                     ref={fileInputRef}
                                     type="file"
@@ -212,12 +213,7 @@ export function ReportModal({
                                     className="hidden"
                                 />
                                 <Upload size={20} className="mx-auto mb-2 text-slate-400" />
-                                <p
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="text-sm text-slate-600"
-                                >
-                                    Click to upload photos or drag and drop
-                                </p>
+                                <p className="text-sm text-slate-600">Click to upload photos or drag and drop</p>
                             </div>
                             {selectedFiles.length > 0 && (
                                 <div className="mt-2 text-sm text-slate-600">

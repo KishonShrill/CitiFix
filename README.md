@@ -41,6 +41,10 @@ cp .env.example .env
 ```bash
 # Start development server
 npm run dev
+
+# Start development database
+npx supabase init
+npx supabase start
 ```
 
 ### Build & Deploy
@@ -98,7 +102,7 @@ npx drizzle-kit generate
 npx drizzle-kit migrate
 
 # Seed initial data
-node --import tsx lib/seed.ts
+npm run db:seed
 ```
 
 ## Project Structure
