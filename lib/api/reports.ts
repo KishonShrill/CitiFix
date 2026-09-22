@@ -23,7 +23,6 @@ export interface ReportMedia {
 
 export interface Report {
     id: string;
-    publicId: string;
     title: string;
     description: string;
     latitude: number;
@@ -36,6 +35,7 @@ export interface Report {
     userId?: string;
     submittedAt: string;
     publishedAt?: string;
+    createdAt?: string;
     media?: ReportMedia[];
 }
 
@@ -148,6 +148,7 @@ export async function getUserReports(params?: Omit<ReportsFilterParams, "minLat"
     const json = (await res.json()) as SuccessResponse<PaginatedResponse<Report>["data"]> & {
         meta: PaginatedResponse<Report>["meta"];
     };
+    console.log(json)
     return {
         data: json.data,
         meta: json.meta,
@@ -247,4 +248,68 @@ export async function getReportMedia(publicId: string): Promise<ReportMedia[]> {
 export async function deleteMedia(publicId: string, mediaId: string): Promise<void> {
     const res = await fetch(`${API_BASE}/reports/${publicId}/media/${mediaId}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Failed to delete media");
+}
+
+// Admin actions
+export async function verifyReportAdmin(id: string): Promise<Report> {
+    const res = await fetch(`${API_BASE}/admin/reports/${id}/verify`, { method: "POST" });
+    if (!res.ok) {
+        const err = (await res.json()) as ErrorResponse;
+        throw new Error(err.error.message || "Failed to verify report");
+    }
+    const json = (await res.json()) as SuccessResponse<Report>;
+    return json.data;
+}
+
+export async function rejectReportAdmin(id: string, reason: string): Promise<Report> {
+    const res = await fetch(`${API_BASE}/admin/reports/${id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) {
+        const err = (await res.json()) as ErrorResponse;
+        throw new Error(err.error.message || "Failed to reject report");
+    }
+    const json = (await res.json()) as SuccessResponse<Report>;
+    return json.data;
+}
+
+export async function duplicateReportAdmin(id: string, duplicateOfId?: string): Promise<Report> {
+    const res = await fetch(`${API_BASE}/admin/reports/${id}/duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(duplicateOfId ? { duplicateOfId } : {}),
+    });
+    if (!res.ok) {
+        const err = (await res.json()) as ErrorResponse;
+        throw new Error(err.error.message || "Failed to mark as duplicate");
+    }
+    const json = (await res.json()) as SuccessResponse<Report>;
+    return json.data;
+}
+
+export async function getAdminReports(params?: { status?: string, limit?: number, offset?: number }): Promise<PaginatedResponse<Report>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.append("status", params.status);
+    if (params?.limit) query.append("limit", params.limit.toString());
+    if (params?.offset) query.append("offset", params.offset.toString());
+
+    const res = await fetch(`${API_BASE}/admin/reports?${query}`);
+    if (!res.ok) {
+        const err = (await res.json() as any).catch(() => ({ error: { message: "Failed to fetch admin queue" } }));
+        throw new Error(err.error?.message || "Failed to fetch admin queue");
+    }
+
+    // Some routes use sendPaginated which resturns { data, meta }
+    const json = await res.json() as SuccessResponse<PaginatedResponse<Report>["data"]> & {
+        meta: PaginatedResponse<Report>["meta"];
+    };
+
+    console.log(json)
+
+    return {
+        data: json.data,
+        meta: json.meta,
+    };
 }

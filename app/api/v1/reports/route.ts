@@ -18,13 +18,6 @@ export async function GET(request: Request) {
     const severity = url.searchParams.get("severity") ?? undefined;
     const barangay = url.searchParams.get("barangay") ?? undefined;
 
-    // Bounding box for map viewport (west, south, east, north)
-    const bbox = {
-        west: url.searchParams.get("bbox")?.split(",")[0],
-        south: url.searchParams.get("bbox")?.split(",")[1],
-        east: url.searchParams.get("bbox")?.split(",")[2],
-        north: url.searchParams.get("bbox")?.split(",")[3],
-    };
 
     // Build where conditions - only show published/verified reports
     const conditions = [
@@ -48,11 +41,16 @@ export async function GET(request: Request) {
     }
 
     // Bounding box filter
-    if (bbox.west && bbox.south && bbox.east && bbox.north) {
-        const w = parseFloat(bbox.west);
-        const s = parseFloat(bbox.south);
-        const e = parseFloat(bbox.east);
-        const n = parseFloat(bbox.north);
+    const minLat = url.searchParams.get("minLat");
+    const maxLat = url.searchParams.get("maxLat");
+    const minLng = url.searchParams.get("minLng");
+    const maxLng = url.searchParams.get("maxLng");
+
+    if (minLat && maxLat && minLng && maxLng) {
+        const s = parseFloat(minLat);
+        const n = parseFloat(maxLat);
+        const w = parseFloat(minLng);
+        const e = parseFloat(maxLng);
 
         if (!isNaN(w) && !isNaN(s) && !isNaN(e) && !isNaN(n)) {
             conditions.push(

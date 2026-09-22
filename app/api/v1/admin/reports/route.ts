@@ -36,7 +36,7 @@ export async function GET(request: Request) {
             barangay: report.barangay,
             severity: report.severity,
             status: report.status,
-            createdAt: report.createdAt,
+            submittedAt: report.createdAt,
             category: {
                 id: category.id,
                 name: category.name,

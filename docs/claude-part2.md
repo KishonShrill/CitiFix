@@ -84,10 +84,10 @@
 - [ ] Implement `/api/v1/admin/reports/:id/verify` call
 - [ ] Implement `/api/v1/admin/reports/:id/reject` with reason
 - [ ] Implement `/api/v1/admin/reports/:id/duplicate` call
-- [ ] Add success/error notifications (toast)
-- [ ] Refresh queue after actions
-- [ ] Loading states during mutation
-- [ ] Handle role-based permissions
+- [x] Add success/error notifications (toast)
+- [x] Refresh queue after actions
+- [x] Loading states during mutation
+- [x] Handle role-based permissions
 
 #### 3. Add Filtering UI (`Task #7`)
 - [ ] Create FilterBar component

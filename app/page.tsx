@@ -21,6 +21,8 @@ export default function Home() {
     } | null>(null);
 
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [isPickingLocation, setIsPickingLocation] = useState(false);
+    const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [isUserDashboardOpen, setIsUserDashboardOpen] = useState(false);
     const [isAdminQueueOpen, setIsAdminQueueOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -29,7 +31,7 @@ export default function Home() {
     const [user, setUser] = useState<{ id: string; name: string | null; email: string; role?: string } | null>(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-    const { data: reportsData, isLoading: reportsLoading } = useReports(
+    const { data: reportsData, isFetching: reportsFetching } = useReports(
         mapBounds
             ? {
                 minLat: mapBounds.minLat,
@@ -76,7 +78,12 @@ export default function Home() {
             setIsAuthModalOpen(true);
             return;
         }
-        setIsReportModalOpen(true);
+
+        // Start picking location mode instead of opening modal directly
+        setIsPickingLocation(true);
+        setPickedLocation(
+            userLocation ? { lat: userLocation[1], lng: userLocation[0] } : { lat: 8.228, lng: 124.2452 }
+        );
     };
 
     if (isCheckingAuth) {
@@ -98,6 +105,8 @@ export default function Home() {
                     onBoundsChange={setMapBounds}
                     center={userLocation}
                     zoom={13}
+                    pinLocation={isPickingLocation ? (pickedLocation || undefined) : undefined}
+                    onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
                 />
             )}
 
@@ -111,13 +120,15 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleOpenReportModal}
-                        className="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
-                    >
-                        <Plus size={16} />
-                        Report Issue
-                    </button>
+                    {!isPickingLocation && (
+                        <button
+                            onClick={handleOpenReportModal}
+                            className="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+                        >
+                            <Plus size={16} />
+                            Report Issue
+                        </button>
+                    )}
 
                     {user ? (
                         <UserMenu
@@ -138,7 +149,7 @@ export default function Home() {
             </div>
 
             {/* Loading indicator */}
-            {reportsLoading && (
+            {reportsFetching && (
                 <div className="absolute top-20 left-4 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20">
                     Loading reports...
                 </div>
@@ -155,13 +166,40 @@ export default function Home() {
             {user && (
                 <ReportModal
                     isOpen={isReportModalOpen}
-                    onClose={() => setIsReportModalOpen(false)}
-                    defaultLocation={
-                        userLocation
-                            ? { lat: userLocation[1], lng: userLocation[0] }
-                            : undefined
-                    }
+                    onClose={() => {
+                        setIsReportModalOpen(false);
+                        setIsPickingLocation(false);
+                        setPickedLocation(null);
+                    }}
+                    location={pickedLocation || undefined}
                 />
+            )}
+
+            {/* Picking Location Overlay */}
+            {isPickingLocation && !isReportModalOpen && (
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-4 rounded-xl shadow-lg border border-slate-200 z-30 flex flex-col items-center gap-3 w-[90%] max-w-sm">
+                    <p className="text-sm font-medium text-slate-800 text-center">
+                        Drag the pin or tap the map to set the exact location
+                    </p>
+                    <div className="flex gap-2 w-full">
+                        <button
+                            onClick={() => {
+                                setIsPickingLocation(false);
+                                setPickedLocation(null);
+                            }}
+                            className="flex-1 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => setIsReportModalOpen(true)}
+                            disabled={!pickedLocation}
+                            className="flex-1 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                        >
+                            Confirm →
+                        </button>
+                    </div>
+                </div>
             )}
 
             {/* Report Slide Out */}
@@ -190,18 +228,6 @@ export default function Home() {
                 <AdminQueue
                     isOpen={isAdminQueueOpen}
                     onClose={() => setIsAdminQueueOpen(false)}
-                    reports={reportsData?.data || []}
-                    isLoading={reportsLoading}
-                    onVerify={async (reportId) => {
-                        // This will be implemented with actual API calls
-                        console.log("Verify:", reportId);
-                    }}
-                    onReject={async (reportId, reason) => {
-                        console.log("Reject:", reportId, reason);
-                    }}
-                    onDuplicate={async (reportId) => {
-                        console.log("Duplicate:", reportId);
-                    }}
                 />
             )}
 

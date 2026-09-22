@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import * as api from "@/lib/api/reports";
 
 // Categories
@@ -51,6 +51,7 @@ export function useReports(params?: UseReportsParams) {
         queryKey: ["reports", params],
         queryFn: () => api.getReports(params),
         enabled: params?.minLat !== undefined && params?.maxLat !== undefined,
+        placeholderData: keepPreviousData,
     });
 }
 
@@ -151,5 +152,49 @@ export function useDeleteMedia() {
         onSuccess: (_, { publicId }) => {
             queryClient.invalidateQueries({ queryKey: ["reportMedia", publicId] });
         },
+    });
+}
+
+// Admin Mutations
+export function useVerifyReport() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.verifyReportAdmin(id),
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+            queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+            queryClient.invalidateQueries({ queryKey: ["report", id] });
+        },
+    });
+}
+
+export function useRejectReport() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, reason }: { id: string; reason: string }) => api.rejectReportAdmin(id, reason),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+            queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+            queryClient.invalidateQueries({ queryKey: ["report", id] });
+        },
+    });
+}
+
+export function useDuplicateReport() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, duplicateOfId }: { id: string; duplicateOfId?: string }) => api.duplicateReportAdmin(id, duplicateOfId),
+        onSuccess: (_, { id }) => {
+            queryClient.invalidateQueries({ queryKey: ["reports"] });
+            queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+            queryClient.invalidateQueries({ queryKey: ["report", id] });
+        },
+    });
+}
+
+export function useAdminReports(params?: { status?: string, limit?: number, offset?: number }) {
+    return useQuery({
+        queryKey: ["adminReports", params],
+        queryFn: () => api.getAdminReports(params),
     });
 }

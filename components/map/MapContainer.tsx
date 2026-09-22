@@ -7,8 +7,8 @@ import MapGL, {
     Marker,
     type MapRef,
     type MapLayerMouseEvent,
+    type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
-import type { GeoJsonObject } from "geojson";
 import type { Report } from "@/lib/api/reports";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { setWorkerUrl } from "maplibre-gl";
@@ -28,6 +28,7 @@ interface MapContainerProps {
     }) => void;
     center?: [number, number];
     zoom?: number;
+    onMove?: (e: ViewStateChangeEvent) => void;
     /** When set, renders a draggable pin at this position. */
     pinLocation?: { lat: number; lng: number };
     /** Fires when the pin is dragged or the map is clicked (in picking mode). */
@@ -41,6 +42,7 @@ export function MapContainer({
     onBoundsChange,
     center = [124.2452, 8.228],
     zoom = 16,
+    onMove,
     pinLocation,
     onPinLocationChange,
 }: MapContainerProps) {
@@ -52,15 +54,15 @@ export function MapContainer({
      * MapLibre can render this entire collection as one source/layer
      * instead of creating a separate DOM marker for every report.
      */
-    const reportsGeoJSON = useMemo<GeoJsonObject>(() => {
+    const reportsGeoJSON = useMemo<any>(() => {
         return {
             type: "FeatureCollection",
             features: reports.map((report) => ({
                 type: "Feature",
                 properties: {
-                    publicId: report.publicId,
+                    id: report.id,
                     status: report.status,
-                    category: report.category,
+                    category: report.category, // fix string mismatch error manually if any, currently missing categoryId? Note this is from before
                 },
                 geometry: {
                     type: "Point",
@@ -74,12 +76,23 @@ export function MapContainer({
     }, [reports]);
 
     /*
-     * Called whenever the map moves.
-     *
-     * This preserves the behavior of your original component where
-     * the parent receives the current visible map bounds.
+     * Called whenever the map finishes loading initially.
      */
-    const handleMove = useCallback(() => {
+    const handleLoad = useCallback(() => {
+        if (!mapRef.current) return;
+        const bounds = mapRef.current.getBounds();
+        onBoundsChange?.({
+            minLat: bounds.getSouth(),
+            maxLat: bounds.getNorth(),
+            minLng: bounds.getWest(),
+            maxLng: bounds.getEast(),
+        });
+    }, [onBoundsChange]);
+    /*
+     * Called whenever the map moves.
+     */
+    const handleMove = useCallback((evt: ViewStateChangeEvent) => {
+        if (onMove) onMove(evt);
         if (!mapRef.current) return;
 
         const bounds = mapRef.current.getBounds();
@@ -90,31 +103,30 @@ export function MapContainer({
             minLng: bounds.getWest(),
             maxLng: bounds.getEast(),
         });
-    }, [onBoundsChange]);
+    }, [onBoundsChange, onMove]);
 
     /*
      * Handle clicking the map.
      *
      * In picking mode (onPinLocationChange provided): move the pin to wherever
-     * the user clicked, unless they clicked an existing report point.
+     * the user clicked. Ignore report clicks during picking.
      * Otherwise: select the report the user clicked on.
      */
     const handleMapClick = useCallback(
         (event: MapLayerMouseEvent) => {
-            const feature = event.features?.[0];
-
-            if (feature) {
-                // Clicked an existing report — select it instead of moving pin.
-                const reportId = feature.properties?.publicId;
-                if (typeof reportId === "string") {
-                    onReportSelect?.(reportId);
-                }
+            // If in picking mode, just move the pin.
+            if (onPinLocationChange) {
+                onPinLocationChange(event.lngLat.lat, event.lngLat.lng);
                 return;
             }
 
-            // No report hit — move the pin if we're in picking mode.
-            if (onPinLocationChange) {
-                onPinLocationChange(event.lngLat.lat, event.lngLat.lng);
+            const feature = event.features?.[0];
+
+            if (feature) {
+                const reportId = feature.properties?.id;
+                if (typeof reportId === "string") {
+                    onReportSelect?.(reportId);
+                }
             }
         },
         [onReportSelect, onPinLocationChange],
@@ -134,6 +146,7 @@ export function MapContainer({
                 }}
                 mapStyle="https://tiles.openfreemap.org/styles/liberty"
                 interactiveLayerIds={["report-points"]}
+                onLoad={handleLoad}
                 onMove={handleMove}
                 onClick={handleMapClick}
                 cursor={onPinLocationChange ? "crosshair" : "auto"}
@@ -154,7 +167,7 @@ export function MapContainer({
                                 "case",
                                 [
                                     "==",
-                                    ["get", "publicId"],
+                                    ["get", "id"],
                                     selectedReportId ?? "",
                                 ],
                                 10,
@@ -176,7 +189,7 @@ export function MapContainer({
                                     "case",
                                     [
                                         "==",
-                                        ["get", "publicId"],
+                                        ["get", "id"],
                                         selectedReportId ?? "",
                                     ],
                                     "#ef4444",
@@ -186,7 +199,7 @@ export function MapContainer({
                                     "case",
                                     [
                                         "==",
-                                        ["get", "publicId"],
+                                        ["get", "id"],
                                         selectedReportId ?? "",
                                     ],
                                     "#64748b",
