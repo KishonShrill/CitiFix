@@ -86,6 +86,10 @@ export default function Home() {
         );
     };
 
+    useEffect(() => {
+        console.log(selectedReport)
+    }, [selectedReport]);
+
     if (isCheckingAuth) {
         return (
             <div className="w-full h-screen flex items-center justify-center bg-slate-50">

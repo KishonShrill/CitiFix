@@ -22,8 +22,6 @@ export function AdminQueue({
     const { data: adminReportsQuery, isLoading } = useAdminReports({ status: "submitted" });
     const pendingReports = adminReportsQuery?.data || [];
 
-    console.log(pendingReports)
-
     const verifyMutation = useVerifyReport();
     const rejectMutation = useRejectReport();
     const duplicateMutation = useDuplicateReport();
