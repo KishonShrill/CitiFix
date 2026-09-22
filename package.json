@@ -37,6 +37,9 @@
         "@vitejs/plugin-rsc": "^0.5.35",
         "dotenv": "^18.0.1",
         "drizzle-kit": "^0.31.10",
+        "eslint": "^9.39.5",
+        "eslint-config-next": "^16.3.5",
+        "lint-staged": "^17.5.1",
         "supabase": "2.117.0",
         "tailwindcss": "latest",
         "typescript": "latest",
@@ -46,9 +49,14 @@
     "type": "module",
     "scripts": {
         "dev": "vinext dev",
+        "prebuild": "npm run cf-typegen",
         "build": "vinext build",
         "start": "wrangler dev --config dist/server/wrangler.json",
         "deploy": "vinext-cloudflare deploy --config dist/server/wrangler.json",
-        "db:seed": "node --import tsx -e \"import 'dotenv/config'; await import('./lib/seed.ts')\""
+        "db:seed": "node --import tsx -e \"import 'dotenv/config'; await import('./lib/seed.ts')\"",
+        "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    },
+    "lint-staged": {
+        "**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write"
     }
 }
