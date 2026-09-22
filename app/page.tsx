@@ -76,10 +76,6 @@ export default function Home() {
             setIsAuthModalOpen(true);
             return;
         }
-        if (!userLocation) {
-            alert("Unable to determine location. Please enable geolocation.");
-            return;
-        }
         setIsReportModalOpen(true);
     };
 
@@ -160,8 +156,11 @@ export default function Home() {
                 <ReportModal
                     isOpen={isReportModalOpen}
                     onClose={() => setIsReportModalOpen(false)}
-                    latitude={userLocation?.[1]}
-                    longitude={userLocation?.[0]}
+                    defaultLocation={
+                        userLocation
+                            ? { lat: userLocation[1], lng: userLocation[0] }
+                            : undefined
+                    }
                 />
             )}
 
