@@ -2,8 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 import type { Report } from "@/lib/api/reports";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { setWorkerUrl } from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker?worker&url";
+
+setWorkerUrl(workerUrl);
 
 interface MapContainerProps {
     reports: Report[];
