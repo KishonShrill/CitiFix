@@ -33,9 +33,9 @@ export interface Report {
     severity?: "low" | "medium" | "high";
     barangay?: string;
     userId?: string;
-    submittedAt: string;
+    createdAt: string;
+    submittedAt?: string;
     publishedAt?: string;
-    createdAt?: string;
     media?: ReportMedia[];
 }
 
@@ -131,8 +131,8 @@ export async function getReports(params?: ReportsFilterParams): Promise<Paginate
 export async function getReport(publicId: string): Promise<Report> {
     const res = await fetch(`${API_BASE}/reports/${publicId}`);
     if (!res.ok) throw new Error("Failed to fetch report");
-    const json = (await res.json()) as SuccessResponse<Report>;
-    return json.data;
+    const json = (await res.json()) as Report;
+    return json;
 }
 
 // Reports - User
@@ -148,7 +148,7 @@ export async function getUserReports(params?: Omit<ReportsFilterParams, "minLat"
     const json = (await res.json()) as SuccessResponse<PaginatedResponse<Report>["data"]> & {
         meta: PaginatedResponse<Report>["meta"];
     };
-    console.log(json)
+
     return {
         data: json.data,
         meta: json.meta,
@@ -305,8 +305,6 @@ export async function getAdminReports(params?: { status?: string, limit?: number
     const json = await res.json() as SuccessResponse<PaginatedResponse<Report>["data"]> & {
         meta: PaginatedResponse<Report>["meta"];
     };
-
-    console.log(json)
 
     return {
         data: json.data,

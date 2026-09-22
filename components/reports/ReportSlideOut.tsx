@@ -4,138 +4,136 @@ import { Report } from "@/lib/api/reports";
 import { X } from "lucide-react";
 
 interface ReportSlideOutProps {
-  report: Report | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
+    report: Report | null;
+    isOpen: boolean;
+    onClose: () => void;
+    onEdit?: () => void;
+    onDelete?: () => void;
 }
 
 export function ReportSlideOut({
-  report,
-  isOpen,
-  onClose,
-  onEdit,
-  onDelete,
+    report,
+    isOpen,
+    onClose,
+    onEdit,
+    onDelete,
 }: ReportSlideOutProps) {
-  if (!isOpen || !report) return null;
+    if (!isOpen || !report) return null;
 
-  const statusColors: Record<string, string> = {
-    submitted: "bg-yellow-100 text-yellow-800",
-    under_review: "bg-blue-100 text-blue-800",
-    verified: "bg-green-100 text-green-800",
-    rejected: "bg-red-100 text-red-800",
-    duplicate: "bg-gray-100 text-gray-800",
-  };
+    const statusColors: Record<string, string> = {
+        submitted: "bg-yellow-100 text-yellow-800",
+        under_review: "bg-blue-100 text-blue-800",
+        verified: "bg-green-100 text-green-800",
+        rejected: "bg-red-100 text-red-800",
+        duplicate: "bg-gray-100 text-gray-800",
+    };
 
-  const severityColors: Record<string, string> = {
-    low: "bg-green-100 text-green-800",
-    medium: "bg-yellow-100 text-yellow-800",
-    high: "bg-red-100 text-red-800",
-  };
+    const severityColors: Record<string, string> = {
+        low: "bg-green-100 text-green-800",
+        medium: "bg-yellow-100 text-yellow-800",
+        high: "bg-red-100 text-red-800",
+    };
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/30 z-40"
-        onClick={onClose}
-      />
+    return (
+        <>
+            {/* Backdrop */}
+            <div
+                className="fixed inset-0 bg-black/30 z-40"
+                onClick={onClose}
+            />
 
-      {/* Slide-out panel */}
-      <div className="fixed right-0 top-0 bottom-0 w-full sm:w-96 bg-white shadow-lg z-50 overflow-y-auto">
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">{report.title}</h2>
-              <p className="text-sm text-slate-600 mt-1">
-                {new Date(report.submittedAt).toLocaleDateString()}
-              </p>
+            {/* Slide-out panel */}
+            <div id="slide-out-panel" className="fixed right-0 top-0 bottom-0 w-full sm:w-96 bg-white shadow-lg z-50 overflow-y-auto">
+                <div className="p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">{report.title}</h2>
+                            <p className="text-sm text-slate-600 mt-1">
+                                {new Date(report.createdAt).toLocaleDateString()}
+                            </p>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="text-slate-400 hover:text-slate-600 p-1"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Status and Severity */}
+                    <div className="flex gap-2 mb-6 flex-wrap">
+                        <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[report.status] || "bg-gray-100 text-gray-800"
+                                }`}
+                        >
+                            {report.status.replace("_", " ")}
+                        </span>
+                        {report.severity && (
+                            <span
+                                className={`px-3 py-1 rounded-full text-xs font-medium ${severityColors[report.severity] || "bg-gray-100 text-gray-800"
+                                    }`}
+                            >
+                                {report.severity} severity
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Description */}
+                    <div className="mb-6">
+                        <h3 className="font-semibold text-slate-900 mb-2">Description</h3>
+                        <p className="text-slate-600 text-sm leading-relaxed">
+                            {report.description}
+                        </p>
+                    </div>
+
+                    {/* Location */}
+                    <div className="mb-6">
+                        <h3 className="font-semibold text-slate-900 mb-2">Location</h3>
+                        <p className="text-slate-600 text-sm">
+                            {report.barangay && <span>{report.barangay}, </span>}
+                            <span>{report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}</span>
+                        </p>
+                    </div>
+
+                    {/* Media */}
+                    {report.media && report.media.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="font-semibold text-slate-900 mb-3">Media</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                {report.media.map((media) => (
+                                    <img
+                                        key={media.id}
+                                        src={media.url}
+                                        alt={`Report media ${media.id}`}
+                                        className="w-full h-32 object-cover rounded-md"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-4 border-t border-slate-200">
+                        {onEdit && (
+                            <button
+                                onClick={onEdit}
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 text-sm"
+                            >
+                                Edit
+                            </button>
+                        )}
+                        {onDelete && (
+                            <button
+                                onClick={onDelete}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 text-sm"
+                            >
+                                Delete
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 p-1"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Status and Severity */}
-          <div className="flex gap-2 mb-6 flex-wrap">
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                statusColors[report.status] || "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {report.status.replace("_", " ")}
-            </span>
-            {report.severity && (
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  severityColors[report.severity] || "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {report.severity} severity
-              </span>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="mb-6">
-            <h3 className="font-semibold text-slate-900 mb-2">Description</h3>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              {report.description}
-            </p>
-          </div>
-
-          {/* Location */}
-          <div className="mb-6">
-            <h3 className="font-semibold text-slate-900 mb-2">Location</h3>
-            <p className="text-slate-600 text-sm">
-              {report.barangay && <span>{report.barangay}, </span>}
-              <span>{report.latitude.toFixed(4)}, {report.longitude.toFixed(4)}</span>
-            </p>
-          </div>
-
-          {/* Media */}
-          {report.media && report.media.length > 0 && (
-            <div className="mb-6">
-              <h3 className="font-semibold text-slate-900 mb-3">Media</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {report.media.map((media) => (
-                  <img
-                    key={media.id}
-                    src={media.url}
-                    alt={`Report media ${media.id}`}
-                    className="w-full h-32 object-cover rounded-md"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-slate-200">
-            {onEdit && (
-              <button
-                onClick={onEdit}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 text-sm"
-              >
-                Edit
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 text-sm"
-              >
-                Delete
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+        </>
+    );
 }

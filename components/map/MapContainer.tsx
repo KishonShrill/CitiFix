@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import MapGL, {
     Source,
     Layer,
@@ -15,6 +15,12 @@ import { setWorkerUrl } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker?worker&url";
 
 setWorkerUrl(workerUrl);
+
+import MapControls from "./MapLibreControls";
+
+const iliganBoundaryData = await fetch(
+    "/data/iligan-city-boundary.json",
+).then((res) => res.json());
 
 interface MapContainerProps {
     reports: Report[];
@@ -46,14 +52,9 @@ export function MapContainer({
     pinLocation,
     onPinLocationChange,
 }: MapContainerProps) {
+    const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
     const mapRef = useRef<MapRef>(null);
 
-    /*
-     * Convert reports into GeoJSON.
-     *
-     * MapLibre can render this entire collection as one source/layer
-     * instead of creating a separate DOM marker for every report.
-     */
     const reportsGeoJSON = useMemo<any>(() => {
         return {
             type: "FeatureCollection",
@@ -105,13 +106,6 @@ export function MapContainer({
         });
     }, [onBoundsChange, onMove]);
 
-    /*
-     * Handle clicking the map.
-     *
-     * In picking mode (onPinLocationChange provided): move the pin to wherever
-     * the user clicked. Ignore report clicks during picking.
-     * Otherwise: select the report the user clicked on.
-     */
     const handleMapClick = useCallback(
         (event: MapLayerMouseEvent) => {
             // If in picking mode, just move the pin.
@@ -145,12 +139,67 @@ export function MapContainer({
                     zoom,
                 }}
                 mapStyle="https://tiles.openfreemap.org/styles/liberty"
+                terrain={{
+                    source: "terrain-source",
+                    exaggeration: isTerrainEnabled ? 1 : 0,
+                }}
                 interactiveLayerIds={["report-points"]}
                 onLoad={handleLoad}
                 onMove={handleMove}
                 onClick={handleMapClick}
                 cursor={onPinLocationChange ? "crosshair" : "auto"}
             >
+                <MapControls
+                    mapRef={mapRef}
+                    isTerrainEnabled={isTerrainEnabled}
+                    onToggleTerrain={() => setIsTerrainEnabled(!isTerrainEnabled)}
+                />
+
+                {isTerrainEnabled && (
+                    <Source
+                        id="terrain-source"
+                        type="raster-dem"
+                        tiles={[
+                            "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
+                        ]}
+                        encoding="terrarium"
+                        tileSize={256}
+                        maxzoom={14}
+                    >
+                        <Layer
+                            id="hillshade-layer"
+                            type="hillshade"
+                            paint={{
+                                // Controls the intensity of the shadows (0.0 to 1.0)
+                                "hillshade-exaggeration": 0.6,
+                                "hillshade-shadow-color": "#334155",
+                                "hillshade-highlight-color": "#ffffff",
+                            }}
+                        />
+                    </Source>
+                )}
+
+                <Source id="iligan-boundary" type="geojson" data={iliganBoundaryData}>
+                    <Layer
+                        id="iligan-boundary-line"
+                        type="line"
+                        paint={{
+                            "line-color": "#94a3b8",
+                            "line-width": 2,
+                            "line-dasharray": [4, 4],
+                        }}
+                    />
+
+                    <Layer
+                        id="iligan-boundary-fill"
+                        type="fill"
+                        paint={{
+                            "fill-color": "#cbd5e1",
+                            "fill-opacity": 0.05,
+                        }}
+                    />
+                </Source>
+
                 <Source
                     id="reports"
                     type="geojson"
