@@ -8,9 +8,10 @@ import { UserDashboard } from "@/components/dashboard/UserDashboard";
 import { AdminQueue } from "@/components/admin/AdminQueue";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { LegendModal } from "@/components/common/LegendModal";
 import { useReports, useReport } from "@/hooks/useReports";
 import { authClient } from "@/lib/auth-client";
-import { Plus } from "lucide-react";
+import { Plus, HelpCircle } from "lucide-react";
 
 export default function Home() {
     const [mapBounds, setMapBounds] = useState<{
@@ -20,6 +21,7 @@ export default function Home() {
         maxLng: number;
     } | null>(null);
 
+    const [isLegendOpen, setIsLegendOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [isPickingLocation, setIsPickingLocation] = useState(false);
     const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -125,13 +127,22 @@ export default function Home() {
 
                 <div className="flex items-center gap-2">
                     {!isPickingLocation && (
-                        <button
-                            onClick={handleOpenReportModal}
-                            className="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
-                        >
-                            <Plus size={16} />
-                            Report Issue
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setIsLegendOpen(true)}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 text-sm font-medium transition-colors"
+                            >
+                                <HelpCircle size={16} />
+                                Legend
+                            </button>
+                            <button
+                                onClick={handleOpenReportModal}
+                                className="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+                            >
+                                <Plus size={16} />
+                                Report Issue
+                            </button>
+                        </>
                     )}
 
                     {user ? (
@@ -178,6 +189,12 @@ export default function Home() {
                     location={pickedLocation || undefined}
                 />
             )}
+
+            {/* Legend Modal */}
+            <LegendModal
+                isOpen={isLegendOpen}
+                onClose={() => setIsLegendOpen(false)}
+            />
 
             {/* Picking Location Overlay */}
             {isPickingLocation && !isReportModalOpen && (

@@ -2,6 +2,7 @@
 
 import { Report } from "@/lib/api/reports";
 import { X } from "lucide-react";
+import { getIcon } from "@/lib/icons";
 
 interface ReportSlideOutProps {
     report: Report | null;
@@ -34,6 +35,8 @@ export function ReportSlideOut({
         high: "bg-red-100 text-red-800",
     };
 
+    const ProblemIcon = getIcon(report.problemType.icon);
+
     return (
         <>
             {/* Backdrop */}
@@ -59,6 +62,28 @@ export function ReportSlideOut({
                         >
                             <X size={20} />
                         </button>
+                    </div>
+
+                    {/* Category & Problem Type */}
+                    <div className="mb-6 p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="w-3 h-3 rounded-full inline-block"
+                                style={{ backgroundColor: report.category.color }}
+                            />
+                            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                                {report.category.name}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-900 font-medium text-sm">
+                            <div
+                                className="p-1.5 rounded-md text-white flex items-center justify-center"
+                                style={{ backgroundColor: report.category.color }}
+                            >
+                                <ProblemIcon size={16} />
+                            </div>
+                            <span>{report.problemType.name}</span>
+                        </div>
                     </div>
 
                     {/* Status and Severity */}
