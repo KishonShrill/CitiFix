@@ -1,23 +1,32 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "cityfix",
-	"compatibility_date": "2026-09-17",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"main": "vinext/server/fetch-handler",
-	"assets": {
-		"directory": "dist/client",
-		"not_found_handling": "none",
-		"binding": "ASSETS"
-	},
-	"images": {
-		"binding": "IMAGES"
-	},
-	"kv_namespaces": [
-		{
-			"binding": "CITYFIX_KV_CACHE",
-			"id": "e7016d7d9fe9448d929b38a1f7086b9b"
-		}
-	]
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "citifix",
+    "compatibility_date": "2026-09-17",
+    "compatibility_flags": [
+        "nodejs_compat"
+    ],
+    "main": "vinext/server/fetch-handler",
+    "assets": {
+        "directory": "dist/client",
+        "not_found_handling": "none",
+        "binding": "ASSETS"
+    },
+    "cache": {
+        "enabled": true,
+    },
+    "services": [
+        {
+            "binding": "WORKER_SELF_REFERENCE",
+            "service": "citifix",
+        },
+    ],
+    "images": {
+        "binding": "IMAGES"
+    },
+    "kv_namespaces": [
+        {
+            "binding": "CITYFIX_KV_CACHE",
+            "id": "e7016d7d9fe9448d929b38a1f7086b9b"
+        }
+    ]
 }
