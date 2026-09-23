@@ -26,6 +26,7 @@ export const problemType = pgTable("problem_type", {
     .references(() => category.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
+  icon: text("icon").default("AlertCircle").notNull(),
   active: boolean("active").default(true).notNull(),
   displayOrder: integer("display_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

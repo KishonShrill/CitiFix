@@ -94,51 +94,51 @@ async function seed() {
     console.log("🔧 Creating problem types...");
 
     const problemTypesData = [
-        // Roads & Infrastructure
-        { categoryName: "Roads & Infrastructure", name: "Pothole", description: "Damaged road surface" },
-        { categoryName: "Roads & Infrastructure", name: "Cracked Pavement", description: "Cracks in the road or sidewalk" },
-        { categoryName: "Roads & Infrastructure", name: "Damaged Sidewalk", description: "Broken or uneven sidewalk" },
-        { categoryName: "Roads & Infrastructure", name: "Bridge Issue", description: "Bridge damage or safety concern" },
-        { categoryName: "Roads & Infrastructure", name: "Road Debris", description: "Debris blocking the road" },
+        // Roads & Infrastructure — icons: unique per type within this category
+        { categoryName: "Roads & Infrastructure", name: "Pothole",          icon: "TriangleAlert", description: "Damaged road surface" },
+        { categoryName: "Roads & Infrastructure", name: "Cracked Pavement", icon: "Construction",  description: "Cracks in the road or sidewalk" },
+        { categoryName: "Roads & Infrastructure", name: "Damaged Sidewalk", icon: "Footprints",    description: "Broken or uneven sidewalk" },
+        { categoryName: "Roads & Infrastructure", name: "Bridge Issue",     icon: "Waves",         description: "Bridge damage or safety concern" },
+        { categoryName: "Roads & Infrastructure", name: "Road Debris",      icon: "Trash",         description: "Debris blocking the road" },
 
         // Water & Sanitation
-        { categoryName: "Water & Sanitation", name: "No Water Supply", description: "No water in the area" },
-        { categoryName: "Water & Sanitation", name: "Water Leak", description: "Leaking pipe or water main" },
-        { categoryName: "Water & Sanitation", name: "Dirty Water", description: "Contaminated or discolored water" },
-        { categoryName: "Water & Sanitation", name: "Sewage Problem", description: "Sewage overflow or backup" },
-        { categoryName: "Water & Sanitation", name: "Blocked Drainage", description: "Clogged drain or canal" },
+        { categoryName: "Water & Sanitation", name: "No Water Supply", icon: "CircleOff",    description: "No water in the area" },
+        { categoryName: "Water & Sanitation", name: "Water Leak",      icon: "Droplets",     description: "Leaking pipe or water main" },
+        { categoryName: "Water & Sanitation", name: "Dirty Water",     icon: "FlaskConical", description: "Contaminated or discolored water" },
+        { categoryName: "Water & Sanitation", name: "Sewage Problem",  icon: "Biohazard",    description: "Sewage overflow or backup" },
+        { categoryName: "Water & Sanitation", name: "Blocked Drainage",icon: "Filter",       description: "Clogged drain or canal" },
 
         // Electricity
-        { categoryName: "Electricity", name: "Power Outage", description: "No electricity in the area" },
-        { categoryName: "Electricity", name: "Damaged Power Line", description: "Fallen or exposed electrical wire" },
-        { categoryName: "Electricity", name: "Streetlight Not Working", description: "Broken or dark streetlight" },
-        { categoryName: "Electricity", name: "Electrical Hazard", description: "Exposed wiring or dangerous electrical issue" },
+        { categoryName: "Electricity", name: "Power Outage",           icon: "ZapOff",       description: "No electricity in the area" },
+        { categoryName: "Electricity", name: "Damaged Power Line",     icon: "Plug",         description: "Fallen or exposed electrical wire" },
+        { categoryName: "Electricity", name: "Streetlight Not Working",icon: "LightbulbOff", description: "Broken or dark streetlight" },
+        { categoryName: "Electricity", name: "Electrical Hazard",      icon: "Zap",          description: "Exposed wiring or dangerous electrical issue" },
 
         // Waste Management
-        { categoryName: "Waste Management", name: "Uncollected Garbage", description: "Garbage not picked up on schedule" },
-        { categoryName: "Waste Management", name: "Illegal Dumping", description: "Trash dumped in unauthorized location" },
-        { categoryName: "Waste Management", name: "Overflowing Bin", description: "Public trash bin is full" },
-        { categoryName: "Waste Management", name: "Littering", description: "Excessive litter in public area" },
+        { categoryName: "Waste Management", name: "Uncollected Garbage",icon: "PackageOpen", description: "Garbage not picked up on schedule" },
+        { categoryName: "Waste Management", name: "Illegal Dumping",   icon: "MapPinOff",    description: "Trash dumped in unauthorized location" },
+        { categoryName: "Waste Management", name: "Overflowing Bin",   icon: "Archive",      description: "Public trash bin is full" },
+        { categoryName: "Waste Management", name: "Littering",         icon: "Cigarette",    description: "Excessive litter in public area" },
 
         // Public Safety
-        { categoryName: "Public Safety", name: "Crime Report", description: "Criminal activity or suspicious behavior" },
-        { categoryName: "Public Safety", name: "Traffic Violation", description: "Traffic rule violations" },
-        { categoryName: "Public Safety", name: "Public Hazard", description: "Safety hazard in public area" },
-        { categoryName: "Public Safety", name: "Stray Animals", description: "Dangerous or problematic stray animals" },
+        { categoryName: "Public Safety", name: "Crime Report",      icon: "Siren",       description: "Criminal activity or suspicious behavior" },
+        { categoryName: "Public Safety", name: "Traffic Violation", icon: "Car",         description: "Traffic rule violations" },
+        { categoryName: "Public Safety", name: "Public Hazard",     icon: "AlertCircle", description: "Safety hazard in public area" },
+        { categoryName: "Public Safety", name: "Stray Animals",     icon: "Dog",         description: "Dangerous or problematic stray animals" },
 
         // Health & Environment
-        { categoryName: "Health & Environment", name: "Air Pollution", description: "Smoke or bad air quality" },
-        { categoryName: "Health & Environment", name: "Water Pollution", description: "Polluted river, stream, or body of water" },
-        { categoryName: "Health & Environment", name: "Noise Pollution", description: "Excessive noise disturbance" },
-        { categoryName: "Health & Environment", name: "Health Concern", description: "Public health issue" },
+        { categoryName: "Health & Environment", name: "Air Pollution",   icon: "Wind",      description: "Smoke or bad air quality" },
+        { categoryName: "Health & Environment", name: "Water Pollution", icon: "Gauge",     description: "Polluted river, stream, or body of water" },
+        { categoryName: "Health & Environment", name: "Noise Pollution", icon: "Volume2",   description: "Excessive noise disturbance" },
+        { categoryName: "Health & Environment", name: "Health Concern",  icon: "HeartPulse",description: "Public health issue" },
 
         // Parks & Recreation
-        { categoryName: "Parks & Recreation", name: "Damaged Equipment", description: "Broken playground or sports equipment" },
-        { categoryName: "Parks & Recreation", name: "Park Maintenance", description: "Overgrown grass or unmaintained park" },
-        { categoryName: "Parks & Recreation", name: "Vandalism", description: "Damaged or defaced public property" },
+        { categoryName: "Parks & Recreation", name: "Damaged Equipment", icon: "Hammer",      description: "Broken playground or sports equipment" },
+        { categoryName: "Parks & Recreation", name: "Park Maintenance",  icon: "Leaf",        description: "Overgrown grass or unmaintained park" },
+        { categoryName: "Parks & Recreation", name: "Vandalism",         icon: "PaintBucket", description: "Damaged or defaced public property" },
 
         // Other
-        { categoryName: "Other", name: "General Concern", description: "Issue not covered by other categories" },
+        { categoryName: "Other", name: "General Concern", icon: "CircleHelp", description: "Issue not covered by other categories" },
     ];
 
     let order = 1;
@@ -153,6 +153,7 @@ async function seed() {
             id: nanoid(),
             categoryId: cat.id,
             name: pt.name,
+            icon: pt.icon,
             description: pt.description,
             displayOrder: order++,
         }).onConflictDoNothing();

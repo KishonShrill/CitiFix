@@ -35,6 +35,7 @@ export async function GET(
             problemType: {
                 id: problemType.id,
                 name: problemType.name,
+                icon: problemType.icon,
             },
         })
         .from(report)
@@ -74,7 +75,7 @@ export async function PATCH(
         return sendError(400, "NOT_EDITABLE", "Report can only be edited while in 'submitted' status");
     }
 
-    const body = await request.json();
+    const body = await request.json() as Record<string, unknown>;
     const allowedFields = ["title", "description", "latitude", "longitude", "address", "barangay", "severity"];
     const updates: Record<string, unknown> = {};
 

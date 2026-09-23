@@ -40,10 +40,12 @@ export async function GET(request: Request) {
             category: {
                 id: category.id,
                 name: category.name,
+                color: category.color,
             },
             problemType: {
                 id: problemType.id,
                 name: problemType.name,
+                icon: problemType.icon,
             },
         })
         .from(report)

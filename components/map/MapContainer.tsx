@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import MapGL, {
     Source,
     Layer,
@@ -9,6 +9,8 @@ import MapGL, {
     type MapLayerMouseEvent,
     type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
+import * as LucideIcons from "lucide-react";
+import type { LucideProps } from "lucide-react";
 import type { Report } from "@/lib/api/reports";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { setWorkerUrl } from "maplibre-gl";
@@ -41,6 +43,77 @@ interface MapContainerProps {
     onPinLocationChange?: (lat: number, lng: number) => void;
 }
 
+/*
+ * Resolve a Lucide icon name string to a renderable component.
+ * Falls back to AlertCircle if the name is missing or invalid.
+ */
+function getIcon(name: string): React.FC<LucideProps> {
+    return (
+        (LucideIcons as unknown as Record<string, React.FC<LucideProps>>)[name]
+        ?? LucideIcons.AlertCircle
+    );
+}
+
+/*
+ * A single report pin rendered as a DOM marker.
+ * Colours come from the report's category; the icon from the problem type.
+ * Selected reports render slightly larger with a bolder ring.
+ */
+interface ReportMarkerProps {
+    report: Report;
+    isSelected: boolean;
+    onSelect: (id: string) => void;
+}
+
+function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
+    const Icon = getIcon(report.problemType.icon);
+
+    // Unverified reports use a muted slate tone to signal "pending"
+    const bgColor = report.status === "verified" ? report.category.color : "#94a3b8";
+
+    const baseSize = isSelected ? 36 : 30;
+    const iconSize = isSelected ? 18 : 14;
+    const borderWidth = isSelected ? 3 : 2;
+
+    return (
+        <Marker
+            longitude={report.longitude}
+            latitude={report.latitude}
+            anchor="bottom"
+            onClick={(e) => {
+                // Prevent the map's onClick from also firing
+                e.originalEvent.stopPropagation();
+                onSelect(report.id);
+            }}
+        >
+            <div className="flex flex-col items-center cursor-pointer">
+                <div
+                    className="rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+                    style={{
+                        width: baseSize,
+                        height: baseSize,
+                        backgroundColor: bgColor,
+                        border: `${borderWidth}px solid white`,
+                        outline: isSelected ? `2px solid ${bgColor}` : "none",
+                        outlineOffset: "1px",
+                    }}
+                >
+                    <Icon size={iconSize} color="white" strokeWidth={2.5} />
+                </div>
+                {/* Stem below the circle */}
+                <div
+                    className="rounded-full"
+                    style={{
+                        width: 3,
+                        height: 8,
+                        backgroundColor: bgColor,
+                    }}
+                />
+            </div>
+        </Marker>
+    );
+}
+
 export function MapContainer({
     reports,
     selectedReportId,
@@ -55,27 +128,6 @@ export function MapContainer({
     const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
     const mapRef = useRef<MapRef>(null);
 
-    const reportsGeoJSON = useMemo<any>(() => {
-        return {
-            type: "FeatureCollection",
-            features: reports.map((report) => ({
-                type: "Feature",
-                properties: {
-                    id: report.id,
-                    status: report.status,
-                    category: report.category, // fix string mismatch error manually if any, currently missing categoryId? Note this is from before
-                },
-                geometry: {
-                    type: "Point",
-                    coordinates: [
-                        report.longitude,
-                        report.latitude,
-                    ],
-                },
-            })),
-        };
-    }, [reports]);
-
     /*
      * Called whenever the map finishes loading initially.
      */
@@ -89,6 +141,7 @@ export function MapContainer({
             maxLng: bounds.getEast(),
         });
     }, [onBoundsChange]);
+
     /*
      * Called whenever the map moves.
      */
@@ -97,7 +150,6 @@ export function MapContainer({
         if (!mapRef.current) return;
 
         const bounds = mapRef.current.getBounds();
-
         onBoundsChange?.({
             minLat: bounds.getSouth(),
             maxLat: bounds.getNorth(),
@@ -106,24 +158,18 @@ export function MapContainer({
         });
     }, [onBoundsChange, onMove]);
 
+    /*
+     * In picking mode, clicking the map moves the pin.
+     * Outside picking mode, report selection is handled per-Marker
+     * via stopPropagation, so this handler sees only bare-map clicks.
+     */
     const handleMapClick = useCallback(
         (event: MapLayerMouseEvent) => {
-            // If in picking mode, just move the pin.
             if (onPinLocationChange) {
                 onPinLocationChange(event.lngLat.lat, event.lngLat.lng);
-                return;
-            }
-
-            const feature = event.features?.[0];
-
-            if (feature) {
-                const reportId = feature.properties?.id;
-                if (typeof reportId === "string") {
-                    onReportSelect?.(reportId);
-                }
             }
         },
-        [onReportSelect, onPinLocationChange],
+        [onPinLocationChange],
     );
 
     return (
@@ -143,7 +189,6 @@ export function MapContainer({
                     source: "terrain-source",
                     exaggeration: isTerrainEnabled ? 1 : 0,
                 }}
-                interactiveLayerIds={["report-points"]}
                 onLoad={handleLoad}
                 onMove={handleMove}
                 onClick={handleMapClick}
@@ -170,7 +215,6 @@ export function MapContainer({
                             id="hillshade-layer"
                             type="hillshade"
                             paint={{
-                                // Controls the intensity of the shadows (0.0 to 1.0)
                                 "hillshade-exaggeration": 0.6,
                                 "hillshade-shadow-color": "#334155",
                                 "hillshade-highlight-color": "#ffffff",
@@ -200,75 +244,15 @@ export function MapContainer({
                     />
                 </Source>
 
-                <Source
-                    id="reports"
-                    type="geojson"
-                    data={reportsGeoJSON}
-                >
-                    <Layer
-                        id="report-points"
-                        type="circle"
-                        paint={{
-                            /*
-                             * Selected reports become larger.
-                             */
-                            "circle-radius": [
-                                "case",
-                                [
-                                    "==",
-                                    ["get", "id"],
-                                    selectedReportId ?? "",
-                                ],
-                                10,
-                                7,
-                            ],
-
-                            /*
-                             * Verified reports are orange.
-                             * Other reports are gray.
-                             */
-                            "circle-color": [
-                                "case",
-                                [
-                                    "==",
-                                    ["get", "status"],
-                                    "verified",
-                                ],
-                                [
-                                    "case",
-                                    [
-                                        "==",
-                                        ["get", "id"],
-                                        selectedReportId ?? "",
-                                    ],
-                                    "#ef4444",
-                                    "#f97316",
-                                ],
-                                [
-                                    "case",
-                                    [
-                                        "==",
-                                        ["get", "id"],
-                                        selectedReportId ?? "",
-                                    ],
-                                    "#64748b",
-                                    "#cbd5e1",
-                                ],
-                            ],
-
-                            /*
-                             * White border around every report.
-                             */
-                            "circle-stroke-color": "#ffffff",
-                            "circle-stroke-width": 2,
-
-                            /*
-                             * Make selected reports slightly more prominent.
-                             */
-                            "circle-opacity": 1,
-                        }}
+                {/* One DOM marker per report — category color + problem type icon */}
+                {reports.map((report) => (
+                    <ReportMarker
+                        key={report.id}
+                        report={report}
+                        isSelected={report.id === selectedReportId}
+                        onSelect={(id) => onReportSelect?.(id)}
                     />
-                </Source>
+                ))}
 
                 {/* Draggable pin for location picking */}
                 {pinLocation && (

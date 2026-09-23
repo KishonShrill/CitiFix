@@ -1,0 +1,1 @@
+ALTER TABLE "problem_type" ADD COLUMN "icon" text DEFAULT 'AlertCircle' NOT NULL;
