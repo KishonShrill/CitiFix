@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, CheckCircle, XCircle, Copy } from "lucide-react";
+import { X, CheckCircle, XCircle, Copy, RefreshCw } from "lucide-react";
 import { Report } from "@/lib/api/reports";
 import { toast } from "sonner";
 import { useAdminReports, useVerifyReport, useRejectReport, useDuplicateReport } from "@/hooks/useReports";
@@ -19,12 +19,52 @@ export function AdminQueue({
     const [rejectReason, setRejectReason] = useState("");
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-    const { data: adminReportsQuery, isLoading } = useAdminReports({ status: "submitted" });
+    // Refresh controls state
+    const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
+    const [autoRefreshSettingsOpen, setAutoRefreshSettingsOpen] = useState(false);
+    const [autoRefreshInterval, setAutoRefreshInterval] = useState<number>(60000); // Default 1 min
+    const [cooldownRemaining, setCooldownRemaining] = useState(0);
+
+    const { data: adminReportsQuery, isLoading, refetch, isRefetching } = useAdminReports({ status: "submitted" });
     const pendingReports = adminReportsQuery?.data || [];
 
     const verifyMutation = useVerifyReport();
     const rejectMutation = useRejectReport();
     const duplicateMutation = useDuplicateReport();
+
+    // Setup auto-refresh interval
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout;
+        if (isOpen && autoRefreshEnabled) {
+            intervalId = setInterval(() => {
+                refetch();
+                toast.info("Auto-refreshed queue", { id: "auto-refresh", duration: 1500 });
+            }, autoRefreshInterval);
+        }
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [isOpen, autoRefreshEnabled, autoRefreshInterval, refetch]);
+
+    // Setup cooldown timer ticks
+    useEffect(() => {
+        if (cooldownRemaining > 0) {
+            const timer = setTimeout(() => {
+                setCooldownRemaining(prev => prev - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [cooldownRemaining]);
+
+    const handleManualRefresh = () => {
+        if (cooldownRemaining > 0) {
+            toast.error(`Please wait ${cooldownRemaining}s before refreshing again.`);
+            return;
+        }
+        refetch();
+        setCooldownRemaining(15);
+        toast.success("Refreshed queue manually", { id: "manual-refresh", duration: 2000 });
+    };
 
     const handleVerify = async (reportId: string) => {
         setActionLoading(reportId);
@@ -95,24 +135,64 @@ export function AdminQueue({
                                 {pendingReports.length} report{pendingReports.length !== 1 ? "s" : ""} pending review
                             </p>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="text-slate-400 hover:text-slate-600 p-1"
-                        >
-                            <X size={20} />
-                        </button>
+                        
+                        <div className="flex items-center gap-4">
+                            {/* Refresh controls */}
+                            <div className="flex items-center gap-2 relative">
+                                <div className="flex items-center gap-2 border border-slate-200 rounded-md py-1 px-2">
+                                    <label className="text-xs font-medium text-slate-600 flex items-center gap-1 cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            className="rounded text-blue-600 focus:ring-blue-500"
+                                            checked={autoRefreshEnabled}
+                                            onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                                        />
+                                        Auto-refresh
+                                    </label>
+                                    
+                                    <select 
+                                        className="text-xs border-none bg-slate-50 focus:ring-0 p-1 rounded text-slate-700 outline-none"
+                                        disabled={!autoRefreshEnabled}
+                                        value={autoRefreshInterval}
+                                        onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
+                                    >
+                                        <option value={60000}>1 min</option>
+                                        <option value={120000}>2 min</option>
+                                        <option value={300000}>5 min</option>
+                                    </select>
+                                </div>
+                                
+                                <button
+                                    onClick={handleManualRefresh}
+                                    disabled={cooldownRemaining > 0 || isRefetching}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <RefreshCw size={14} className={isRefetching ? "animate-spin" : ""} />
+                                    {cooldownRemaining > 0 ? `Wait ${cooldownRemaining}s` : "Refresh"}
+                                </button>
+                            </div>
+
+                            <div className="h-6 w-px bg-slate-200 mx-1"></div>
+
+                            <button
+                                onClick={onClose}
+                                className="text-slate-400 hover:text-slate-600 p-1"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Queue List */}
                         <div className="lg:col-span-1 border-r border-slate-200">
-                            {isLoading && (
+                            {isLoading && !adminReportsQuery && (
                                 <div className="text-center py-8">
                                     <p className="text-slate-600">Loading queue...</p>
                                 </div>
                             )}
 
-                            {!isLoading && pendingReports.length === 0 && (
+                            {(!isLoading || adminReportsQuery) && pendingReports.length === 0 && (
                                 <div className="text-center py-8">
                                     <p className="text-slate-600">All caught up! No pending reports.</p>
                                 </div>
