@@ -29,7 +29,7 @@ export default function Home() {
     const [isAdminQueueOpen, setIsAdminQueueOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-    const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+    const [userLocation, setUserLocation] = useState<[number, number]>([124.24, 8.24]);
     const [user, setUser] = useState<{ id: string; name: string | null; email: string; role?: string } | null>(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -48,31 +48,43 @@ export default function Home() {
 
     // Check authentication on mount
     useEffect(() => {
+        let mounted = true;
         const checkSession = async () => {
-            const session = await authClient.getSession();
-            if (session.data?.user) {
-                setUser(session.data.user as typeof user);
+            try {
+                const session = await authClient.getSession();
+                if (mounted && session.data?.user) {
+                    setUser(session.data.user as typeof user);
+                }
+            } catch (error) {
+                console.log("Auth session error:", error);
+            } finally {
+                if (mounted) {
+                    setIsCheckingAuth(false);
+                }
             }
-            setIsCheckingAuth(false);
         };
 
         checkSession();
+        return () => { mounted = false; };
     }, []);
 
     // Get user's geolocation on mount
     useEffect(() => {
+        let mounted = true;
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    setUserLocation([position.coords.longitude, position.coords.latitude]);
+                    if (mounted) {
+                        setUserLocation([position.coords.longitude, position.coords.latitude]);
+                    }
                 },
                 (error) => {
                     console.log("Geolocation error:", error);
-                    // Default to Iligan City if geolocation fails
-                    setUserLocation([124.24, 8.24]);
-                }
+                },
+                { timeout: 10000 }
             );
         }
+        return () => { mounted = false; };
     }, []);
 
     const handleOpenReportModal = () => {
