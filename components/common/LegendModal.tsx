@@ -25,6 +25,8 @@ export function LegendModal({ isOpen, onClose }: LegendModalProps) {
         }
     }, [isOpen]);
 
+    console.log(problemTypes)
+
     if (!isOpen) return null;
 
     return (
