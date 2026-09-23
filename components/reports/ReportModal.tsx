@@ -4,7 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { X, Upload } from "lucide-react";
 import { useCategories, useCategoryProblemTypes, useCreateReport } from "@/hooks/useReports";
 import type { CreateReportInput } from "@/lib/api/reports";
+import * as api from "@/lib/api/reports";
 import { toast } from "sonner";
+import { isPointInPolygon } from "@/lib/geo";
 
 interface ReportModalProps {
     isOpen: boolean;
@@ -39,6 +41,7 @@ export function ReportModal({
         severity: "medium",
     });
 
+    const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
@@ -66,8 +69,31 @@ export function ReportModal({
             return;
         }
 
+        if (selectedFiles.length < 1 || selectedFiles.length > 3) {
+            toast.error("Please select between 1 and 3 photos");
+            return;
+        }
+
         try {
-            await createReport.mutateAsync({
+            setUploading(true);
+            // Fetch boundary data and check if location is inside
+            const boundaryRes = await fetch("/data/iligan-city-boundary.json");
+            const boundaryData = await boundaryRes.json() as { features: Array<{ geometry: { coordinates: number[][][] } }> };
+
+            // Boundary data is a FeatureCollection, we need the first feature's coordinates
+            // It's a Polygon, so the outer ring is the first element of coordinates
+            const polygonCoords = boundaryData.features[0].geometry.coordinates[0] as [number, number][];
+
+            if (!isPointInPolygon(location, polygonCoords)) {
+                setUploading(false);
+                toast.error("Location must be within Iligan City boundary.", {
+                    description: "Please move the pin inside the city limits before submitting.",
+                    duration: 5000,
+                });
+                return;
+            }
+
+            const report = await createReport.mutateAsync({
                 title: formData.title,
                 description: formData.description,
                 categoryId: selectedCategory,
@@ -77,9 +103,47 @@ export function ReportModal({
                 longitude: location.lng,
             });
 
-            toast.success("Report submitted successfully");
+            console.log(report)
+
+            // Upload files
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const signatureData = await api.getUploadSignature(report.id, i + 1);
+
+                console.log(signatureData)
+
+                const data = new FormData();
+                data.append("file", file);
+                data.append("api_key", signatureData.apiKey);
+                data.append("timestamp", signatureData.timestamp.toString());
+                data.append("signature", signatureData.signature);
+                data.append("folder", signatureData.folder);
+                data.append("public_id", signatureData.publicId);
+
+                const uploadRes = await fetch(
+                    `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/image/upload`,
+                    {
+                        method: "POST",
+                        body: data,
+                    }
+                );
+
+                if (!uploadRes.ok) {
+                    throw new Error("Failed to upload image to Cloudinary");
+                }
+
+                const uploadData = await uploadRes.json() as { public_id: string; secure_url: string };
+
+                console.log(uploadData)
+
+                await api.registerMedia(report.id, uploadData.public_id, uploadData.secure_url);
+            }
+
+            toast.success("Report submitted successfully with photos");
+            setUploading(false);
             onClose();
         } catch (error) {
+            setUploading(false);
             toast.error(error instanceof Error ? error.message : "Failed to create report");
         }
     };
@@ -250,10 +314,10 @@ export function ReportModal({
                             </button>
                             <button
                                 type="submit"
-                                disabled={createReport.isPending}
+                                disabled={createReport.isPending || uploading}
                                 className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md font-medium hover:bg-orange-700 disabled:opacity-50"
                             >
-                                {createReport.isPending ? "Submitting..." : "Submit Report"}
+                                {createReport.isPending || uploading ? "Submitting..." : "Submit Report"}
                             </button>
                         </div>
                     </form>

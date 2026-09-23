@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useUI, useMapState, useUserLocation } from "@/context/AppState";
 import { MapContainer } from "@/components/map/MapContainer";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { ReportSlideOut } from "@/components/reports/ReportSlideOut";
@@ -9,83 +9,35 @@ import { AdminQueue } from "@/components/admin/AdminQueue";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LegendModal } from "@/components/common/LegendModal";
-import { useReports, useReport } from "@/hooks/useReports";
+import { useReports } from "@/hooks/useReports";
 import { authClient } from "@/lib/auth-client";
 import { Plus, HelpCircle } from "lucide-react";
 
 export default function Home() {
-    const [mapBounds, setMapBounds] = useState<{
-        minLat: number;
-        maxLat: number;
-        minLng: number;
-        maxLng: number;
-    } | null>(null);
+    const { data: session, isPending: isCheckingAuth } = authClient.useSession();
+    const user = session?.user;
 
-    const [isLegendOpen, setIsLegendOpen] = useState(false);
-    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-    const [isPickingLocation, setIsPickingLocation] = useState(false);
-    const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [isUserDashboardOpen, setIsUserDashboardOpen] = useState(false);
-    const [isAdminQueueOpen, setIsAdminQueueOpen] = useState(false);
-    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
-    const [userLocation, setUserLocation] = useState<[number, number]>([124.24, 8.24]);
-    const [user, setUser] = useState<{ id: string; name: string | null; email: string; role?: string } | null>(null);
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const {
+        isLegendOpen, setIsLegendOpen,
+        isReportModalOpen, setIsReportModalOpen,
+        isPickingLocation, setIsPickingLocation,
+        pickedLocation, setPickedLocation,
+        isUserDashboardOpen, setIsUserDashboardOpen,
+        isAdminQueueOpen, setIsAdminQueueOpen,
+        isAuthModalOpen, setIsAuthModalOpen
+    } = useUI();
+
+    const { mapBounds, setMapBounds, selectedReportId, setSelectedReportId } = useMapState();
+    const { userLocation } = useUserLocation();
 
     const { data: reportsData, isFetching: reportsFetching } = useReports(
-        mapBounds
-            ? {
-                minLat: mapBounds.minLat,
-                maxLat: mapBounds.maxLat,
-                minLng: mapBounds.minLng,
-                maxLng: mapBounds.maxLng,
-            }
-            : undefined
+        mapBounds ? {
+            minLat: mapBounds.minLat,
+            maxLat: mapBounds.maxLat,
+            minLng: mapBounds.minLng,
+            maxLng: mapBounds.maxLng,
+        } : undefined
     );
-
-    const { data: selectedReport } = useReport(selectedReportId || "");
-
-    // Check authentication on mount
-    useEffect(() => {
-        let mounted = true;
-        const checkSession = async () => {
-            try {
-                const session = await authClient.getSession();
-                if (mounted && session.data?.user) {
-                    setUser(session.data.user as typeof user);
-                }
-            } catch (error) {
-                console.log("Auth session error:", error);
-            } finally {
-                if (mounted) {
-                    setIsCheckingAuth(false);
-                }
-            }
-        };
-
-        checkSession();
-        return () => { mounted = false; };
-    }, []);
-
-    // Get user's geolocation on mount
-    useEffect(() => {
-        let mounted = true;
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    if (mounted) {
-                        setUserLocation([position.coords.longitude, position.coords.latitude]);
-                    }
-                },
-                (error) => {
-                    console.log("Geolocation error:", error);
-                },
-                { timeout: 10000 }
-            );
-        }
-        return () => { mounted = false; };
-    }, []);
 
     const handleOpenReportModal = () => {
         if (!user) {
@@ -93,16 +45,9 @@ export default function Home() {
             return;
         }
 
-        // Start picking location mode instead of opening modal directly
         setIsPickingLocation(true);
-        setPickedLocation(
-            userLocation ? { lat: userLocation[1], lng: userLocation[0] } : { lat: 8.228, lng: 124.2452 }
-        );
+        setPickedLocation({ lat: userLocation[1], lng: userLocation[0] });
     };
-
-    useEffect(() => {
-        console.log(selectedReport)
-    }, [selectedReport]);
 
     if (isCheckingAuth) {
         return (
@@ -113,20 +58,18 @@ export default function Home() {
     }
 
     return (
-        <main className="relative w-full h-screen overflow-hidden">
+        <main className="relative w-full h-dvh overflow-hidden">
             {/* Map */}
-            {userLocation && (
-                <MapContainer
-                    reports={reportsData?.data || []}
-                    selectedReportId={selectedReportId || undefined}
-                    onReportSelect={setSelectedReportId}
-                    onBoundsChange={setMapBounds}
-                    center={userLocation}
-                    zoom={13}
-                    pinLocation={isPickingLocation ? (pickedLocation || undefined) : undefined}
-                    onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
-                />
-            )}
+            <MapContainer
+                reports={reportsData?.data || []}
+                selectedReportId={selectedReportId || undefined}
+                onReportSelect={setSelectedReportId}
+                onBoundsChange={setMapBounds}
+                center={userLocation}
+                zoom={13}
+                pinLocation={isPickingLocation ? (pickedLocation || undefined) : undefined}
+                onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
+            />
 
             {/* Top Bar */}
             <div className="absolute top-0 left-0 right-0 bg-white shadow-sm z-30 px-4 py-3 flex items-center justify-between">
@@ -142,14 +85,14 @@ export default function Home() {
                         <>
                             <button
                                 onClick={() => setIsLegendOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 text-sm font-medium transition-colors"
+                                className="cursor-help max-lg:hidden flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 text-sm font-medium transition-colors"
                             >
                                 <HelpCircle size={16} />
                                 Legend
                             </button>
                             <button
                                 onClick={handleOpenReportModal}
-                                className="flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+                                className="cursor-pointer max-md:hidden flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
                             >
                                 <Plus size={16} />
                                 Report Issue
@@ -159,15 +102,14 @@ export default function Home() {
 
                     {user ? (
                         <UserMenu
-                            user={user}
-                            setUser={setUser}
+                            user={user as any}
                             onMyReportsClick={() => setIsUserDashboardOpen(true)}
                             onAdminClick={() => setIsAdminQueueOpen(true)}
                         />
                     ) : (
                         <button
                             onClick={() => setIsAuthModalOpen(true)}
-                            className="px-3 py-2 text-slate-900 border border-slate-300 rounded-md hover:bg-slate-50 text-sm font-medium"
+                            className="cursor-pointer px-3 py-2 text-slate-900 border border-slate-300 rounded-md hover:bg-slate-50 text-sm font-medium"
                         >
                             Sign In
                         </button>
@@ -175,21 +117,41 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Loading indicator */}
-            {reportsFetching && (
-                <div className="absolute top-20 left-4 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20">
-                    Loading reports...
-                </div>
-            )}
+            {/* Status Indicators */}
+            <div className="absolute top-20 left-4 flex flex-col gap-2 z-20">
+                {reportsFetching && (
+                    <div className="bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600">
+                        Loading reports...
+                    </div>
+                )}
+            </div>
 
-            {/* Report count */}
+            {/* Legend Button */}
+            <button
+                onClick={() => setIsLegendOpen(true)}
+                className="cursor-pointer absolute bottom-5 left-4 flex lg:hidden items-center gap-1.5 px-3 py-2 bg-white text-slate-700 rounded-xl hover:bg-slate-200 shadow-xl font-bold transition-colors"
+            >
+                <HelpCircle size={20} />
+                Legend
+            </button>
+
+            {/* Report Button */}
+            <button
+                onClick={handleOpenReportModal}
+                className="cursor-pointer absolute bottom-5 left-1/2 -translate-x-1/2 md:hidden flex p-5 bg-orange-600 text-white rounded-full hover:bg-orange-700 text-sm font-medium"
+            >
+                <Plus size={20} />
+            </button>
+
+
+
             {reportsData && (
                 <div className="absolute top-20 right-4 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20">
                     {reportsData.data.length} report{reportsData.data.length !== 1 ? "s" : ""} visible
                 </div>
             )}
 
-            {/* Report Modal */}
+            {/* Modals & Overlays */}
             {user && (
                 <ReportModal
                     isOpen={isReportModalOpen}
@@ -202,13 +164,11 @@ export default function Home() {
                 />
             )}
 
-            {/* Legend Modal */}
             <LegendModal
                 isOpen={isLegendOpen}
                 onClose={() => setIsLegendOpen(false)}
             />
 
-            {/* Picking Location Overlay */}
             {isPickingLocation && !isReportModalOpen && (
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-4 rounded-xl shadow-lg border border-slate-200 z-30 flex flex-col items-center gap-3 w-[90%] max-w-sm">
                     <p className="text-sm font-medium text-slate-800 text-center">
@@ -235,16 +195,11 @@ export default function Home() {
                 </div>
             )}
 
-            {/* Report Slide Out */}
-            {selectedReport && (
-                <ReportSlideOut
-                    report={selectedReport}
-                    isOpen={!!selectedReportId}
-                    onClose={() => setSelectedReportId(null)}
-                />
-            )}
+            <ReportSlideOut
+                isOpen={!!selectedReportId}
+                onClose={() => setSelectedReportId(null)}
+            />
 
-            {/* User Dashboard */}
             {user && (
                 <UserDashboard
                     isOpen={isUserDashboardOpen}
@@ -256,15 +211,13 @@ export default function Home() {
                 />
             )}
 
-            {/* Admin Queue */}
-            {user && (user.role === "admin" || user.role === "moderator") && (
+            {user && ((user as any).role === "admin" || (user as any).role === "moderator") && (
                 <AdminQueue
                     isOpen={isAdminQueueOpen}
                     onClose={() => setIsAdminQueueOpen(false)}
                 />
             )}
 
-            {/* Auth Modal */}
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}

@@ -4,8 +4,8 @@ import { v2 as cloudinary } from "cloudinary";
 
 // Configure cloudinary with environment variables
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
+    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -17,17 +17,19 @@ export async function POST(
     await requireUser(request);
     const { publicId } = await params;
 
-    // We don't check if report exists here to save a DB query since it's just a signature
-    // The actual report existence will be checked when saving the media record
+    const body = (await request.json().catch(() => ({}))) as { index?: number };
+    const index = body.index || 1;
+    const customPublicId = `${publicId}/${index}`;
 
     const timestamp = Math.round(new Date().getTime() / 1000);
-    const folder = `cityfix/reports/${publicId}`;
+    const folder = `citifix`;
 
     try {
         const signature = cloudinary.utils.api_sign_request(
             {
                 timestamp,
                 folder,
+                public_id: customPublicId,
             },
             process.env.CLOUDINARY_API_SECRET!
         );
@@ -35,9 +37,10 @@ export async function POST(
         return sendSuccess({
             signature,
             timestamp,
-            cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-            apiKey: process.env.CLOUDINARY_API_KEY,
+            cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+            apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
             folder,
+            publicId: customPublicId,
         });
     } catch (error) {
         console.error("Cloudinary signing error:", error);

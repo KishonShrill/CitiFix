@@ -6,6 +6,9 @@ export function useCategories() {
     return useQuery({
         queryKey: ["categories"],
         queryFn: api.getCategories,
+        gcTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 2,
+        refetchOnWindowFocus: false,
     });
 }
 
@@ -13,6 +16,9 @@ export function useCategory(id: string) {
     return useQuery({
         queryKey: ["category", id],
         queryFn: () => api.getCategory(id),
+        gcTime: 1000 * 60 * 5,    // 5 minutes
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        refetchOnWindowFocus: false,
         enabled: !!id,
     });
 }
@@ -22,6 +28,9 @@ export function useProblemTypes() {
     return useQuery({
         queryKey: ["problemTypes"],
         queryFn: api.getProblemTypes,
+        gcTime: 1000 * 60 * 5,    // 5 minutes
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        refetchOnWindowFocus: false,
     });
 }
 
@@ -29,6 +38,9 @@ export function useCategoryProblemTypes(categoryId: string) {
     return useQuery({
         queryKey: ["problemTypes", categoryId],
         queryFn: () => api.getCategoryProblemTypes(categoryId),
+        gcTime: 1000 * 60 * 5,    // 5 minutes
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        refetchOnWindowFocus: false,
         enabled: !!categoryId,
     });
 }
@@ -117,10 +129,10 @@ export function useDeleteReport() {
 }
 
 // Media
-export function useUploadSignature(publicId: string) {
+export function useUploadSignature(publicId: string, index: number = 1) {
     return useQuery({
-        queryKey: ["uploadSignature", publicId],
-        queryFn: () => api.getUploadSignature(publicId),
+        queryKey: ["uploadSignature", publicId, index],
+        queryFn: () => api.getUploadSignature(publicId, index),
         enabled: !!publicId,
     });
 }

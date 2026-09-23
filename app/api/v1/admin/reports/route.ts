@@ -30,6 +30,7 @@ export async function GET(request: Request) {
             userId: report.userId,
             title: report.title,
             description: report.description,
+            url: report.media,
             latitude: report.latitude,
             longitude: report.longitude,
             address: report.address,

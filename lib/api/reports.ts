@@ -27,6 +27,7 @@ export interface Report {
     id: string;
     title: string;
     description: string;
+    url?: string;
     latitude: number;
     longitude: number;
     categoryId: string;
@@ -195,8 +196,8 @@ export async function createReport(data: CreateReportInput): Promise<Report> {
         const err = (await res.json()) as ErrorResponse;
         throw new Error(err.error.message || "Failed to create report");
     }
-    const json = (await res.json()) as SuccessResponse<Report>;
-    return json.data;
+    const json = (await res.json()) as Report;
+    return json;
 }
 
 export async function updateReport(publicId: string, data: Partial<CreateReportInput>): Promise<Report> {
@@ -222,21 +223,29 @@ export async function deleteReport(publicId: string): Promise<void> {
 }
 
 // Media
-export async function getUploadSignature(publicId: string): Promise<{
+export async function getUploadSignature(publicId: string, index: number = 1): Promise<{
     signature: string;
     timestamp: number;
     cloudName: string;
     apiKey: string;
+    folder: string;
+    publicId: string;
 }> {
-    const res = await fetch(`${API_BASE}/reports/${publicId}/media/upload-signature`);
+    const res = await fetch(`${API_BASE}/reports/${publicId}/media/upload-signature`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index }),
+    });
     if (!res.ok) throw new Error("Failed to get upload signature");
-    const json = (await res.json()) as SuccessResponse<{
+    const json = (await res.json()) as {
         signature: string;
         timestamp: number;
         cloudName: string;
         apiKey: string;
-    }>;
-    return json.data;
+        folder: string;
+        publicId: string;
+    };
+    return json;
 }
 
 export async function registerMedia(publicId: string, cloudinaryPublicId: string, url: string): Promise<ReportMedia> {

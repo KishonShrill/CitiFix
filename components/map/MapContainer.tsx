@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import MapGL, {
     Source,
     Layer,
     Marker,
+    AttributionControl,
     type MapRef,
     type MapLayerMouseEvent,
     type ViewStateChangeEvent,
@@ -110,7 +111,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
     );
 }
 
-export function MapContainer({
+export const MapContainer = React.memo(function MapContainer({
     reports,
     selectedReportId,
     onReportSelect,
@@ -179,7 +180,7 @@ export function MapContainer({
     return (
         <div
             className="relative h-full w-full"
-            style={{ minHeight: "100vh" }}
+            style={{ minHeight: "100dvh" }}
         >
             <MapGL
                 ref={mapRef}
@@ -197,12 +198,14 @@ export function MapContainer({
                 onMove={handleMove}
                 onClick={handleMapClick}
                 cursor={onPinLocationChange ? "crosshair" : "auto"}
+                attributionControl={false}
             >
                 <MapControls
                     mapRef={mapRef}
                     isTerrainEnabled={isTerrainEnabled}
                     onToggleTerrain={() => setIsTerrainEnabled(!isTerrainEnabled)}
                 />
+                <AttributionControl compact={false} position="bottom-right" />
 
                 {isTerrainEnabled && (
                     <Source
@@ -291,4 +294,4 @@ export function MapContainer({
             </MapGL>
         </div>
     );
-}
+});

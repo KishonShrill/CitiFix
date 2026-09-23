@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { X, CheckCircle, XCircle, Copy, RefreshCw, HelpCircle } from "lucide-react";
 import { Report } from "@/lib/api/reports";
 import { toast } from "sonner";
@@ -125,12 +126,12 @@ export function AdminQueue({
             />
 
             {/* Modal */}
-            <div className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-5xl bg-white rounded-lg shadow-xl z-50 overflow-y-auto max-h-[90vh]">
+            <div className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-5xl bg-white rounded-lg shadow-xl z-50 overflow-y-auto max-h-[95dvh]">
                 <div className="p-6">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900">Moderation Queue</h2>
+                            <h2 className="text-lg lg:text-2xl font-bold text-slate-900">Moderation Queue</h2>
                             <p className="text-sm text-slate-600 mt-1">
                                 {pendingReports.length} report{pendingReports.length !== 1 ? "s" : ""} pending review
                             </p>
@@ -143,7 +144,7 @@ export function AdminQueue({
                                     <label className="text-xs font-medium text-slate-600 flex items-center gap-1 cursor-pointer">
                                         <input
                                             type="checkbox"
-                                            className="rounded text-blue-600 focus:ring-blue-500"
+                                            className="rounded cursor-pointer text-blue-600 focus:ring-blue-500"
                                             checked={autoRefreshEnabled}
                                             onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
                                         />
@@ -165,12 +166,13 @@ export function AdminQueue({
                                 <button
                                     onClick={handleManualRefresh}
                                     disabled={cooldownRemaining > 0 || isRefetching}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    className="hover:cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <RefreshCw size={14} className={isRefetching ? "animate-spin" : ""} />
                                     {cooldownRemaining > 0 ? `Wait ${cooldownRemaining}s` : "Refresh"}
                                 </button>
 
+                                {/*
                                 <button
                                     onClick={() => setIsLegendOpen(true)}
                                     className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md"
@@ -178,13 +180,14 @@ export function AdminQueue({
                                 >
                                     <HelpCircle size={20} />
                                 </button>
+                                */}
                             </div>
 
                             <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
                             <button
                                 onClick={onClose}
-                                className="text-slate-400 hover:text-slate-600 p-1"
+                                className="cursor-pointer text-slate-400 hover:text-slate-600 p-1"
                             >
                                 <X size={20} />
                             </button>
@@ -206,12 +209,12 @@ export function AdminQueue({
                                 </div>
                             )}
 
-                            <div className="space-y-2 max-h-[calc(90vh-200px)] overflow-y-auto">
+                            <div className="flex space-y-2 max-h-[calc(90vh-200px)] overflow-y-auto">
                                 {pendingReports.map((report) => (
                                     <button
                                         key={report.id}
                                         onClick={() => setSelectedReport(report)}
-                                        className={`w-full text-left p-3 rounded-md border transition-colors ${selectedReport?.id === report.id
+                                        className={`cursor-pointer grow mr-4 text-left p-3 rounded-md border transition-colors ${selectedReport?.id === report.id
                                             ? "bg-blue-50 border-blue-300"
                                             : "border-slate-200 hover:bg-slate-50"
                                             }`}
@@ -220,10 +223,11 @@ export function AdminQueue({
                                             {report.title}
                                         </p>
                                         <p className="text-xs text-slate-600 mt-1 truncate">
+
                                             {report.barangay || "Unknown"}
                                         </p>
                                         <p className="text-xs text-slate-500 mt-1">
-                                            {new Date(report.submittedAt || Date.now()).toLocaleDateString()}
+                                            {new Date(report.submittedAt as string).toLocaleDateString()}
                                         </p>
                                     </button>
                                 ))}
@@ -265,6 +269,23 @@ export function AdminQueue({
                                                 <p className="text-slate-700 mb-4">{selectedReport.description}</p>
                                             </div>
 
+                                            {/* Media */}
+                                            {selectedReport.url && (
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-900 mb-2">Attached Media</p>
+                                                    <Image
+                                                        key={selectedReport.id}
+                                                        src={selectedReport.url}
+                                                        height={150}
+                                                        width={150}
+                                                        alt="Report media"
+                                                        className="w-full h-fit rounded-md"
+                                                    />
+                                                </div>
+                                            )}
+
+
+
                                             {/* Metadata */}
                                             <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-md">
                                                 <div>
@@ -297,23 +318,6 @@ export function AdminQueue({
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Media */}
-                                            {selectedReport.media && selectedReport.media.length > 0 && (
-                                                <div>
-                                                    <p className="text-sm font-medium text-slate-900 mb-2">Attached Media</p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {selectedReport.media.map((media) => (
-                                                            <img
-                                                                key={media.id}
-                                                                src={media.url}
-                                                                alt="Report media"
-                                                                className="w-full h-32 object-cover rounded-md"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
 
                                             {/* Actions */}
                                             <div className="space-y-3 pt-4 border-t border-slate-200">

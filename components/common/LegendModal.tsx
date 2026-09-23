@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { getCategories, getProblemTypes, type Category, type ProblemType } from "@/lib/api/reports";
+import { useCategories, useProblemTypes } from "@/hooks/useReports";
 import { getIcon } from "@/lib/icons";
 
 interface LegendModalProps {
@@ -9,23 +8,8 @@ interface LegendModalProps {
 }
 
 export function LegendModal({ isOpen, onClose }: LegendModalProps) {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [problemTypes, setProblemTypes] = useState<ProblemType[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (isOpen) {
-            Promise.all([getCategories(), getProblemTypes()])
-                .then(([cats, problems]) => {
-                    setCategories(cats);
-                    setProblemTypes(problems);
-                    setIsLoading(false);
-                })
-                .catch(console.error);
-        }
-    }, [isOpen]);
-
-    console.log(problemTypes)
+    const { data: categories } = useCategories();
+    const { data: problemTypes } = useProblemTypes();
 
     if (!isOpen) return null;
 
@@ -40,46 +24,42 @@ export function LegendModal({ isOpen, onClose }: LegendModalProps) {
                         </button>
                     </div>
 
-                    {isLoading ? (
-                        <p className="text-center py-8">Loading legend...</p>
-                    ) : (
-                        <div className="space-y-8">
-                            {categories.map((category: any) => {
-                                const categoryProblems = problemTypes.filter(
-                                    (p) => p.categoryId === category.id
-                                );
-                                if (categoryProblems.length === 0) return null;
+                    <div className="space-y-8">
+                        {categories?.map((category: any) => {
+                            const categoryProblems = problemTypes?.filter(
+                                (p) => p.categoryId === category.id
+                            );
+                            if (categoryProblems?.length === 0) return null;
 
-                                return (
-                                    <div key={category.id}>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <div
-                                                className="w-4 h-4 rounded-full"
-                                                style={{ backgroundColor: category.color || "#cbd5e1" }}
-                                            />
-                                            <h3 className="font-semibold text-slate-800">{category.name}</h3>
-                                        </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                            {categoryProblems.map((pt) => {
-                                                const Icon = getIcon(pt.icon ?? "");
-                                                return (
-                                                    <div key={pt.id} className="flex items-center gap-2 p-2 bg-slate-50 rounded border border-slate-100">
-                                                        <div
-                                                            className="p-1.5 rounded text-white"
-                                                            style={{ backgroundColor: category.color || "#cbd5e1" }}
-                                                        >
-                                                            <Icon size={16} />
-                                                        </div>
-                                                        <span className="text-sm text-slate-700">{pt.name}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                            return (
+                                <div key={category.id}>
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div
+                                            className="w-4 h-4 rounded-full"
+                                            style={{ backgroundColor: category.color || "#cbd5e1" }}
+                                        />
+                                        <h3 className="font-semibold text-slate-800">{category.name}</h3>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        {categoryProblems?.map((pt) => {
+                                            const Icon = getIcon(pt.icon ?? "");
+                                            return (
+                                                <div key={pt.id} className="flex items-center gap-2 p-2 bg-slate-50 rounded border border-slate-100">
+                                                    <div
+                                                        className="p-1.5 rounded text-white"
+                                                        style={{ backgroundColor: category.color || "#cbd5e1" }}
+                                                    >
+                                                        <Icon size={16} />
+                                                    </div>
+                                                    <span className="text-sm text-slate-700">{pt.name}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>

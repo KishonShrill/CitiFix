@@ -25,7 +25,9 @@
     },
     "vars": {
         "BETTER_AUTH_URL": "https://citifix.betteriligancity.org",
-        "SUPABASE_PUBLISHABLE": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
+        "SUPABASE_PUBLISHABLE": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
+        "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlmabgte3",
+        "NEXT_PUBLIC_CLOUDINARY_API_KEY": "264546821783396"
     },
     "kv_namespaces": [
         {

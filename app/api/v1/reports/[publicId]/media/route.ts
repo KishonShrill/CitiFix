@@ -3,11 +3,11 @@ import { report, media } from "@/lib/report-schema";
 import { requireUser } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { nanoid } from "nanoid";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
 
 export async function GET(
-    request: Request,
+    _request: Request,
     { params }: { params: Promise<{ publicId: string }> }
 ) {
     const { publicId } = await params;
@@ -30,7 +30,6 @@ export async function POST(
     const user = await requireUser(request);
     const { publicId } = await params;
     const db = getDB();
-    // Verify report exists and belongs to user OR user is moderator/admin
     const [foundReport] = await db
         .select()
         .from(report)
@@ -45,10 +44,21 @@ export async function POST(
         return sendError(403, "FORBIDDEN", "You can only add media to your own reports");
     }
 
-    const { url, cloudinaryPublicId } = await request.json();
+    const body = await request.json() as { url: string; publicId: string };
+    const { url, publicId: cloudinaryPublicId } = body;
 
     if (!url || !cloudinaryPublicId) {
         return sendError(400, "VALIDATION_ERROR", "url and cloudinaryPublicId are required");
+    }
+
+    // Check existing media count
+    const existingMedia = await db
+        .select()
+        .from(media)
+        .where(eq(media.reportId, publicId));
+
+    if (existingMedia.length >= 3) {
+        return sendError(400, "VALIDATION_ERROR", "Maximum of 3 photos allowed per report");
     }
 
     const mediaId = nanoid();
@@ -58,6 +68,14 @@ export async function POST(
         url,
         cloudinaryPublicId,
     }).returning();
+
+    // If this is the first media item, set it as the report's main media column for thumbnails
+    if (existingMedia.length === 0) {
+        await db
+            .update(report)
+            .set({ media: url })
+            .where(eq(report.id, publicId));
+    }
 
     return sendSuccess(newMedia, 201);
 }

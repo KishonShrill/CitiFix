@@ -11,19 +11,17 @@ interface User {
     role?: string;
 }
 
-interface UserMenuProps {
+export interface UserMenuProps {
     user: User | null;
-    setUser: React.Dispatch<React.SetStateAction<User | null>>;
     onMyReportsClick?: () => void;
     onAdminClick?: () => void;
 }
 
-export function UserMenu({ user, setUser, onMyReportsClick, onAdminClick }: UserMenuProps) {
+export function UserMenu({ user, onMyReportsClick, onAdminClick }: UserMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleSignOut = async () => {
         await authClient.signOut();
-        setUser(null);
         setIsOpen(false);
         window.location.reload();
     };
@@ -38,7 +36,7 @@ export function UserMenu({ user, setUser, onMyReportsClick, onAdminClick }: User
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-1 text-slate-700 hover:bg-slate-100 rounded-md"
+                className="cursor-pointer flex items-center gap-2 px-3 py-1 text-slate-700 hover:bg-slate-100 rounded-md"
             >
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                     {user.name?.charAt(0).toUpperCase() || "U"}
@@ -58,7 +56,7 @@ export function UserMenu({ user, setUser, onMyReportsClick, onAdminClick }: User
                             onMyReportsClick?.();
                             setIsOpen(false);
                         }}
-                        className="w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm"
+                        className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm"
                     >
                         My Reports
                     </button>
@@ -69,7 +67,7 @@ export function UserMenu({ user, setUser, onMyReportsClick, onAdminClick }: User
                                 onAdminClick?.();
                                 setIsOpen(false);
                             }}
-                            className="w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm font-medium border-t border-slate-200 text-orange-600"
+                            className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm font-medium border-t border-slate-200 text-orange-600"
                         >
                             Moderation Queue
                         </button>
@@ -77,7 +75,7 @@ export function UserMenu({ user, setUser, onMyReportsClick, onAdminClick }: User
 
                     <button
                         onClick={handleSignOut}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm border-t border-slate-200 flex items-center gap-2"
+                        className="cursor-pointer w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm border-t border-slate-200 flex items-center gap-2"
                     >
                         <LogOut size={16} />
                         Sign Out
