@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import MapGL, {
     Source,
     Layer,
@@ -19,10 +19,6 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker?worker&url";
 setWorkerUrl(workerUrl);
 
 import MapControls from "./MapLibreControls";
-
-const iliganBoundaryData = await fetch(
-    "/data/iligan-city-boundary.json",
-).then((res) => res.json());
 
 interface MapContainerProps {
     reports: Report[];
@@ -126,7 +122,15 @@ export function MapContainer({
     onPinLocationChange,
 }: MapContainerProps) {
     const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
+    const [iliganBoundaryData, setIliganBoundaryData] = useState<any>(null);
     const mapRef = useRef<MapRef>(null);
+
+    useEffect(() => {
+        fetch("/data/iligan-city-boundary.json")
+            .then(res => res.json())
+            .then(data => setIliganBoundaryData(data))
+            .catch(err => console.error("Failed to load boundary data:", err));
+    }, []);
 
     /*
      * Called whenever the map finishes loading initially.
@@ -223,26 +227,28 @@ export function MapContainer({
                     </Source>
                 )}
 
-                <Source id="iligan-boundary" type="geojson" data={iliganBoundaryData}>
-                    <Layer
-                        id="iligan-boundary-line"
-                        type="line"
-                        paint={{
-                            "line-color": "#94a3b8",
-                            "line-width": 2,
-                            "line-dasharray": [4, 4],
-                        }}
-                    />
+                {iliganBoundaryData && (
+                    <Source id="iligan-boundary" type="geojson" data={iliganBoundaryData}>
+                        <Layer
+                            id="iligan-boundary-line"
+                            type="line"
+                            paint={{
+                                "line-color": "#94a3b8",
+                                "line-width": 2,
+                                "line-dasharray": [4, 4],
+                            }}
+                        />
 
-                    <Layer
-                        id="iligan-boundary-fill"
-                        type="fill"
-                        paint={{
-                            "fill-color": "#cbd5e1",
-                            "fill-opacity": 0.05,
-                        }}
-                    />
-                </Source>
+                        <Layer
+                            id="iligan-boundary-fill"
+                            type="fill"
+                            paint={{
+                                "fill-color": "#cbd5e1",
+                                "fill-opacity": 0.05,
+                            }}
+                        />
+                    </Source>
+                )}
 
                 {/* One DOM marker per report — category color + problem type icon */}
                 {reports.map((report) => (
