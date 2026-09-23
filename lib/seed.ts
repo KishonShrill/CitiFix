@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { resolve } from "path";
+import { sql } from "drizzle-orm";
 
 // Load .env before any other imports that depend on it
 config({ path: resolve(process.cwd(), ".env") });
@@ -16,71 +17,15 @@ const db = getDB();
  * Run with: node --import tsx lib/seed.ts
  */
 
-const categories = [
-    {
-        id: nanoid(),
-        name: "Roads & Infrastructure",
-        description: "Potholes, damaged roads, broken sidewalks, bridges",
-        color: "#ef4444",
-        icon: "Construction",
-        displayOrder: 1,
-    },
-    {
-        id: nanoid(),
-        name: "Water & Sanitation",
-        description: "Water supply issues, leaks, sewage problems",
-        color: "#3b82f6",
-        icon: "Droplet",
-        displayOrder: 2,
-    },
-    {
-        id: nanoid(),
-        name: "Electricity",
-        description: "Power outages, damaged lines, streetlight issues",
-        color: "#eab308",
-        icon: "Zap",
-        displayOrder: 3,
-    },
-    {
-        id: nanoid(),
-        name: "Waste Management",
-        description: "Garbage collection, illegal dumping, recycling",
-        color: "#22c55e",
-        icon: "Trash2",
-        displayOrder: 4,
-    },
-    {
-        id: nanoid(),
-        name: "Public Safety",
-        description: "Crime, traffic violations, hazards",
-        color: "#f97316",
-        icon: "ShieldAlert",
-        displayOrder: 5,
-    },
-    {
-        id: nanoid(),
-        name: "Health & Environment",
-        description: "Air quality, pollution, public health concerns",
-        color: "#06b6d4",
-        icon: "Heart",
-        displayOrder: 6,
-    },
-    {
-        id: nanoid(),
-        name: "Parks & Recreation",
-        description: "Park maintenance, playground equipment, sports facilities",
-        color: "#10b981",
-        icon: "Trees",
-        displayOrder: 7,
-    },
-    {
-        id: nanoid(),
-        name: "Other",
-        description: "Issues that don't fit other categories",
-        color: "#6b7280",
-        icon: "HelpCircle",
-        displayOrder: 99,
-    },
+const categoriesData = [
+    { name: "Roads & Infrastructure", description: "Potholes, damaged roads, broken sidewalks, bridges", color: "#ef4444", icon: "Construction" },
+    { name: "Water & Sanitation", description: "Water supply issues, leaks, sewage problems", color: "#3b82f6", icon: "Droplet" },
+    { name: "Electricity", description: "Power outages, damaged lines, streetlight issues", color: "#eab308", icon: "Zap" },
+    { name: "Waste Management", description: "Garbage collection, illegal dumping, recycling", color: "#22c55e", icon: "Trash2" },
+    { name: "Public Safety", description: "Crime, traffic violations, hazards", color: "#f97316", icon: "ShieldAlert" },
+    { name: "Health & Environment", description: "Air quality, pollution, public health concerns", color: "#06b6d4", icon: "Heart" },
+    { name: "Parks & Recreation", description: "Park maintenance, playground equipment, sports facilities", color: "#10b981", icon: "Trees" },
+    { name: "Other", description: "Issues that don't fit other categories", color: "#6b7280", icon: "HelpCircle" },
 ];
 
 async function seed() {
@@ -88,13 +33,36 @@ async function seed() {
 
     // Insert categories
     console.log("📂 Creating categories...");
-    await db.insert(category).values(categories).onConflictDoNothing();
+
+    let catOrder = 1;
+    for (const cat of categoriesData) {
+        const existing = await db
+            .select()
+            .from(category)
+            .where(eq(category.name, cat.name))
+            .limit(1);
+
+        if (existing.length > 0) {
+            console.log(`Skipping existing category: ${cat.name}`);
+            continue;
+        }
+
+        // Find next display order
+        const [{ maxOrder }] = await db.select({ maxOrder: sql<number>`max(${category.displayOrder})` }).from(category);
+        const order = (maxOrder || 0) + 1;
+
+        await db.insert(category).values({
+            id: nanoid(),
+            ...cat,
+            displayOrder: order,
+        });
+    }
 
     // Insert problem types
     console.log("🔧 Creating problem types...");
 
     const problemTypesData = [
-        // Roads & Infrastructure — icons: unique per type within this category
+        // Roads & Infrastructure
         { categoryName: "Roads & Infrastructure", name: "Pothole", icon: "TriangleAlert", description: "Damaged road surface" },
         { categoryName: "Roads & Infrastructure", name: "Cracked Pavement", icon: "Construction", description: "Cracks in the road or sidewalk" },
         { categoryName: "Roads & Infrastructure", name: "Damaged Sidewalk", icon: "Footprints", description: "Broken or uneven sidewalk" },
@@ -141,18 +109,18 @@ async function seed() {
         { categoryName: "Other", name: "General Concern", icon: "CircleHelp", description: "Issue not covered by other categories" },
     ];
 
-    let order = 1;
     for (const pt of problemTypesData) {
-        const cat = categories.find((c) => c.name === pt.categoryName);
-        if (!cat) {
+        const cat = await db.select().from(category).where(eq(category.name, pt.categoryName)).limit(1);
+        if (cat.length === 0) {
             console.warn(`Category not found: ${pt.categoryName}`);
             continue;
         }
+        const categoryId = cat[0].id;
 
         const existing = await db
             .select()
             .from(problemType)
-            .where(and(eq(problemType.categoryId, cat.id), eq(problemType.name, pt.name)))
+            .where(and(eq(problemType.categoryId, categoryId), eq(problemType.name, pt.name)))
             .limit(1);
 
         if (existing.length > 0) {
@@ -160,13 +128,17 @@ async function seed() {
             continue;
         }
 
+        // Find next display order
+        const [{ maxOrder }] = await db.select({ maxOrder: sql<number>`max(${problemType.displayOrder})` }).from(problemType);
+        const order = (maxOrder || 0) + 1;
+
         await db.insert(problemType).values({
             id: nanoid(),
-            categoryId: cat.id,
+            categoryId: categoryId,
             name: pt.name,
             icon: pt.icon,
             description: pt.description,
-            displayOrder: order++,
+            displayOrder: order,
         });
     }
 
