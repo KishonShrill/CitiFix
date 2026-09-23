@@ -1,11 +1,11 @@
 import { getDB } from "@/lib/db";
-import { report, category, problemType, media } from "@/lib/report-schema";
+import { report, category, problemType } from "@/lib/report-schema";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
-import { eq, asc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 
 export async function GET(
-    request: Request,
+    _request: Request,
     { params }: { params: Promise<{ publicId: string }> }
 ) {
     const { publicId } = await params;
@@ -32,6 +32,7 @@ export async function GET(
             problemType: {
                 id: problemType.id,
                 name: problemType.name,
+                icon: problemType.icon,
             },
         })
         .from(report)

@@ -12,6 +12,7 @@ export interface ProblemType {
     categoryId: string;
     name: string;
     description?: string;
+    icon?: string;
 }
 
 export interface ReportMedia {
@@ -36,6 +37,16 @@ export interface Report {
     createdAt: string;
     submittedAt?: string;
     publishedAt?: string;
+    category: {
+        id: string;
+        name: string;
+        color: string;
+    };
+    problemType: {
+        id: string;
+        name: string;
+        icon: string;
+    };
     media?: ReportMedia[];
 }
 

@@ -41,6 +41,7 @@ export async function GET(request: Request) {
             problemType: {
                 id: problemType.id,
                 name: problemType.name,
+                icon: problemType.icon,
             },
         })
         .from(report)
