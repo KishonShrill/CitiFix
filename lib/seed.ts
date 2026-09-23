@@ -116,7 +116,7 @@ async function seed() {
 
         // Waste Management
         { categoryName: "Waste Management", name: "Uncollected Garbage",icon: "PackageOpen", description: "Garbage not picked up on schedule" },
-        { categoryName: "Waste Management", name: "Illegal Dumping",   icon: "MapPinOff",    description: "Trash dumped in unauthorized location" },
+        { categoryName: "Waste Management", name: "Illegal Dumping",   icon: "Trash2",       description: "Trash dumped in unauthorized location" },
         { categoryName: "Waste Management", name: "Overflowing Bin",   icon: "Archive",      description: "Public trash bin is full" },
         { categoryName: "Waste Management", name: "Littering",         icon: "Cigarette",    description: "Excessive litter in public area" },
 
