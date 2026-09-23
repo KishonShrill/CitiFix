@@ -23,6 +23,10 @@
     "images": {
         "binding": "IMAGES"
     },
+    "vars": {
+        "BETTER_AUTH_URL": "https://citifix.betteriligancity.org",
+        "SUPABASE_PUBLISHABLE": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
+    },
     "kv_namespaces": [
         {
             "binding": "CITYFIX_KV_CACHE",
