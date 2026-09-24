@@ -27,22 +27,27 @@ export async function generateMetadata(
 
     if (!foundReport) {
         return {
-            title: "Report Not Found | BetterIligan",
+            title: "Report Not Found",
         };
     }
 
     const parentMeta = await parent;
 
     return {
-        title: `${foundReport.title} | BetterIligan`,
+        title: `${foundReport.title}`,
         description: foundReport.description,
         openGraph: {
-            title: foundReport.title,
-            description: foundReport.description,
-            url: `/reports/${reportId}`,
+            url: `https://citifix.betteriligancity.org/reports/${reportId}`,
             images: foundReport.media
                 ? [{ url: foundReport.media }]
                 : parentMeta.openGraph?.images || [],
+            siteName: "CitiFIX BetterIligan",
+            locale: "en_PH",
+            type: "website",
+        },
+        twitter: {
+            images: [foundReport.media as string],
+            card: "summary_large_image",
         },
     };
 }

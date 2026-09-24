@@ -32,4 +32,7 @@ export default defineConfig({
     optimizeDeps: {
         exclude: ["maplibre-gl", "react-map-gl"],
     },
+    server: {
+        allowedHosts: true,
+    },
 });

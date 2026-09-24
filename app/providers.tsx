@@ -3,7 +3,7 @@
 // --- React Query Setup ---
 if (process.env.NEXT_PUBLIC_SCAN === "true") {
     import('react-scan').then(({ scan }) => {
-        scan({ enabled: false });
+        scan({ enabled: true });
     });
 }
 import { UIProvider, MapProvider, LocationProvider } from "@/context/AppState";
