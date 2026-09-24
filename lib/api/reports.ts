@@ -223,38 +223,20 @@ export async function deleteReport(publicId: string): Promise<void> {
 }
 
 // Media
-export async function getUploadSignature(publicId: string, index: number = 1): Promise<{
-    signature: string;
-    timestamp: number;
-    cloudName: string;
-    apiKey: string;
-    folder: string;
-    publicId: string;
-}> {
-    const res = await fetch(`${API_BASE}/reports/${publicId}/media/upload-signature`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index }),
-    });
-    if (!res.ok) throw new Error("Failed to get upload signature");
-    const json = (await res.json()) as {
-        signature: string;
-        timestamp: number;
-        cloudName: string;
-        apiKey: string;
-        folder: string;
-        publicId: string;
-    };
-    return json;
-}
+export async function uploadReportMedia(publicId: string, file: File): Promise<ReportMedia> {
+    const formData = new FormData();
+    formData.append("file", file);
 
-export async function registerMedia(publicId: string, cloudinaryPublicId: string, url: string): Promise<ReportMedia> {
     const res = await fetch(`${API_BASE}/reports/${publicId}/media`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ publicId: cloudinaryPublicId, url }),
+        body: formData,
     });
-    if (!res.ok) throw new Error("Failed to register media");
+    
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: { message: "Failed to upload media" } })) as any;
+        throw new Error(err.error?.message || "Failed to upload media");
+    }
+    
     const json = (await res.json()) as SuccessResponse<ReportMedia>;
     return json.data;
 }

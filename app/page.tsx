@@ -82,22 +82,13 @@ export default function Home() {
 
                 <div className="flex items-center gap-2">
                     {!isPickingLocation && (
-                        <>
-                            <button
-                                onClick={() => setIsLegendOpen(true)}
-                                className="cursor-help max-lg:hidden flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 text-sm font-medium transition-colors"
-                            >
-                                <HelpCircle size={16} />
-                                Legend
-                            </button>
-                            <button
-                                onClick={handleOpenReportModal}
-                                className="cursor-pointer max-md:hidden flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
-                            >
-                                <Plus size={16} />
-                                Report Issue
-                            </button>
-                        </>
+                        <button
+                            onClick={handleOpenReportModal}
+                            className="cursor-pointer max-md:hidden flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+                        >
+                            <Plus size={16} />
+                            Report Issue
+                        </button>
                     )}
 
                     {user ? (
@@ -129,7 +120,7 @@ export default function Home() {
             {/* Legend Button */}
             <button
                 onClick={() => setIsLegendOpen(true)}
-                className="cursor-pointer absolute bottom-5 left-4 flex lg:hidden items-center gap-1.5 px-3 py-2 bg-white text-slate-700 rounded-xl hover:bg-slate-200 shadow-xl font-bold transition-colors"
+                className="cursor-pointer absolute bottom-5 left-4 flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 rounded-xl hover:bg-slate-200 shadow-xl font-bold transition-colors"
             >
                 <HelpCircle size={20} />
                 Legend

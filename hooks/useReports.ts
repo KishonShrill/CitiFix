@@ -129,24 +129,7 @@ export function useDeleteReport() {
 }
 
 // Media
-export function useUploadSignature(publicId: string, index: number = 1) {
-    return useQuery({
-        queryKey: ["uploadSignature", publicId, index],
-        queryFn: () => api.getUploadSignature(publicId, index),
-        enabled: !!publicId,
-    });
-}
 
-export function useRegisterMedia() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ publicId, cloudinaryPublicId, url }: { publicId: string; cloudinaryPublicId: string; url: string }) =>
-            api.registerMedia(publicId, cloudinaryPublicId, url),
-        onSuccess: (_, { publicId }) => {
-            queryClient.invalidateQueries({ queryKey: ["reportMedia", publicId] });
-        },
-    });
-}
 
 export function useReportMedia(publicId: string) {
     return useQuery({

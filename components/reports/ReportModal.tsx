@@ -6,12 +6,13 @@ import { useCategories, useCategoryProblemTypes, useCreateReport } from "@/hooks
 import type { CreateReportInput } from "@/lib/api/reports";
 import * as api from "@/lib/api/reports";
 import { toast } from "sonner";
+import { cn } from "@/utils/cn";
 import { isPointInPolygon } from "@/lib/geo";
+import { validInputPhotos, validDraggedPhotos } from "@/utils/fileChecker";
 
 interface ReportModalProps {
     isOpen: boolean;
     onClose: () => void;
-    /** The target location picked by the user */
     location?: { lat: number; lng: number };
 }
 
@@ -20,39 +21,28 @@ export function ReportModal({
     onClose,
     location,
 }: ReportModalProps) {
-    const { data: categories, isLoading: categoriesLoading } = useCategories();
     const [selectedCategory, setSelectedCategory] = useState<string>("");
-    const { data: problemTypes } = useCategoryProblemTypes(selectedCategory);
-    const createReport = useCreateReport();
-
-    // Reset when the modal opens
-    useEffect(() => {
-        if (isOpen) {
-            setFormData({ title: "", description: "", severity: "medium" });
-            setSelectedCategory("");
-            setSelectedFiles([]);
-        }
-    }, [isOpen]);
-
-    // ------------------------------------------------------------------ form
+    const [isDragging, setIsDragging] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [formData, setFormData] = useState<Partial<CreateReportInput>>({
         title: "",
         description: "",
         severity: "medium",
     });
 
-    const [uploading, setUploading] = useState(false);
+    const { data: categories, isLoading: categoriesLoading } = useCategories();
+    const { data: problemTypes } = useCategoryProblemTypes(selectedCategory);
+    const createReport = useCreateReport();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
     const handleInputChange = (field: string, value: unknown) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            setSelectedFiles(Array.from(e.target.files));
-        }
+        const files = validInputPhotos(e)
+        setSelectedFiles(Array.from(files ? files : []));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -108,35 +98,7 @@ export function ReportModal({
             // Upload files
             for (let i = 0; i < selectedFiles.length; i++) {
                 const file = selectedFiles[i];
-                const signatureData = await api.getUploadSignature(report.id, i + 1);
-
-                console.log(signatureData)
-
-                const data = new FormData();
-                data.append("file", file);
-                data.append("api_key", signatureData.apiKey);
-                data.append("timestamp", signatureData.timestamp.toString());
-                data.append("signature", signatureData.signature);
-                data.append("folder", signatureData.folder);
-                data.append("public_id", signatureData.publicId);
-
-                const uploadRes = await fetch(
-                    `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/image/upload`,
-                    {
-                        method: "POST",
-                        body: data,
-                    }
-                );
-
-                if (!uploadRes.ok) {
-                    throw new Error("Failed to upload image to Cloudinary");
-                }
-
-                const uploadData = await uploadRes.json() as { public_id: string; secure_url: string };
-
-                console.log(uploadData)
-
-                await api.registerMedia(report.id, uploadData.public_id, uploadData.secure_url);
+                await api.uploadReportMedia(report.id, file);
             }
 
             toast.success("Report submitted successfully with photos");
@@ -147,6 +109,36 @@ export function ReportModal({
             toast.error(error instanceof Error ? error.message : "Failed to create report");
         }
     };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        console.log("over");
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        console.log("leave")
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files.length === 0) return;
+
+        const files = validDraggedPhotos(e)
+        setSelectedFiles(Array.from(files ? files : []));
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            setFormData({ title: "", description: "", severity: "medium" });
+            setSelectedCategory("");
+            setSelectedFiles([]);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -270,8 +262,18 @@ export function ReportModal({
                                 Attach Photos
                             </label>
                             <div
-                                className="border-2 border-dashed border-slate-300 rounded-md p-4 text-center hover:border-orange-500 cursor-pointer"
+                                className={cn(
+                                    "border-2 border-dashed rounded-md p-6 text-center cursor-pointer",
+                                    "transition-all duration-200",
+                                    isDragging
+                                        ? "border-orange-500 bg-orange-50 scale-[1.01]"
+                                        : "border-slate-300 hover:border-orange-500 hover:bg-slate-50"
+                                )}
                                 onClick={() => fileInputRef.current?.click()}
+                                onDragOver={handleDragOver}
+                                onDragEnter={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
                             >
                                 <input
                                     ref={fileInputRef}
@@ -281,8 +283,8 @@ export function ReportModal({
                                     onChange={handleFileChange}
                                     className="hidden"
                                 />
-                                <Upload size={20} className="mx-auto mb-2 text-slate-400" />
-                                <p className="text-sm text-slate-600">Click to upload photos or drag and drop</p>
+                                <Upload size={20} className="pointer-events-none mx-auto mb-2 text-slate-400" />
+                                <p className="pointer-events-none text-sm text-slate-600">Click to upload photos or drag and drop</p>
                             </div>
                             {selectedFiles.length > 0 && (
                                 <div className="mt-2 text-sm text-slate-600">

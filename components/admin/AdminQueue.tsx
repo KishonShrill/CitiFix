@@ -209,7 +209,7 @@ export function AdminQueue({
                                 </div>
                             )}
 
-                            <div className="flex space-y-2 max-h-[calc(90vh-200px)] overflow-y-auto">
+                            <div className="flex flex-col space-y-2 max-h-[calc(90vh-200px)] overflow-y-auto">
                                 {pendingReports.map((report) => (
                                     <button
                                         key={report.id}
