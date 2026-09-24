@@ -150,7 +150,7 @@ export function ReportModal({
             />
 
             {/* Modal */}
-            <div className="fixed inset-4 sm:auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-xl bg-white rounded-lg shadow-xl z-50 overflow-y-auto max-h-[90vh] h-fit">
+            <div className="fixed inset-4 sm:auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-xl bg-white rounded-lg shadow-xl z-50 overflow-y-auto max-h-[95dvh] h-fit">
                 <div className="p-6">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">

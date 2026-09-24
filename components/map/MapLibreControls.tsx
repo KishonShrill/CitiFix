@@ -54,7 +54,7 @@ export default function MapControls({
     };
 
     return (
-        <div className="pointer-events-auto absolute right-3 bottom-5 z-[1000] flex flex-col gap-2">
+        <div className="pointer-events-auto absolute right-3 bottom-5 z-[40] flex flex-col gap-2">
             {/* Detached 3D Button */}
             <button
                 type="button"
