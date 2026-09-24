@@ -66,7 +66,6 @@ export function ReportModal({
 
         try {
             setUploading(true);
-            // Fetch boundary data and check if location is inside
             const boundaryRes = await fetch("/data/iligan-city-boundary.json");
             const boundaryData = await boundaryRes.json() as { features: Array<{ geometry: { coordinates: number[][][] } }> };
 
@@ -243,7 +242,7 @@ export function ReportModal({
                         {/* Severity */}
                         <div>
                             <label className="block text-sm font-medium text-slate-900 mb-1">
-                                Severity
+                                Severity <span className="text-red-500">*</span>
                             </label>
                             <select
                                 value={formData.severity || "medium"}
@@ -259,7 +258,7 @@ export function ReportModal({
                         {/* File Upload */}
                         <div>
                             <label className="block text-sm font-medium text-slate-900 mb-1">
-                                Attach Photos
+                                Attach Photos <span className="text-red-500">*</span>
                             </label>
                             <div
                                 className={cn(

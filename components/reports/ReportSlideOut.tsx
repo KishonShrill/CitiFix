@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useReport } from "@/hooks/useReports";
 import { useMapState } from "@/context/AppState";
 import { X } from "lucide-react";
@@ -51,12 +52,33 @@ export function ReportSlideOut({
         <>
             {/* Slide-out panel */}
             <div id="slide-out-panel"
-                className={`fixed top-0 bottom-0 right-0 w-full sm:w-96
-                bg-white shadow-lg z-50 overflow-y-auto
+                className={`fixed top-4 w-full sm:w-96
+                bg-white shadow-lg z-50 overflow-y-auto rounded-2xl
                 transition-transform duration-150 ease-in-out
-                ${isOpen ? "translate-x-0" : "translate-x-full"}
+                ${isOpen ? "translate-x-0 right-4" : "translate-x-full right-0"}
                 `}
             >
+                {/* Media */}
+                {report?.url && (
+                    <>
+                        <div className="w-full">
+                            <Image
+                                key={report?.id}
+                                src={report?.url}
+                                width={384}
+                                height={300}
+                                alt={`Report media ${report?.id}`}
+                                className="w-full h-52 object-cover rounded-md"
+                            />
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="absolute top-4 right-4 bg-white rounded-full text-slate-400 hover:text-slate-600 p-1"
+                        >
+                            <X size={20} />
+                        </button>
+                    </>
+                )}
                 <div className="p-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-6">
@@ -66,12 +88,14 @@ export function ReportSlideOut({
                                 {report?.createdAt ? new Date(report.createdAt).toLocaleDateString() : ""}
                             </p>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="text-slate-400 hover:text-slate-600 p-1"
-                        >
-                            <X size={20} />
-                        </button>
+                        {!report?.url && (
+                            <button
+                                onClick={onClose}
+                                className="text-slate-400 hover:text-slate-600 p-1"
+                            >
+                                <X size={20} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Category & Problem Type */}
@@ -131,42 +155,27 @@ export function ReportSlideOut({
                         </p>
                     </div>
 
-                    {/* Media */}
-                    {report?.media && report?.media.length > 0 && (
-                        <div className="mb-6">
-                            <h3 className="font-semibold text-slate-900 mb-3">Media</h3>
-                            <div className="grid grid-cols-2 gap-2">
-                                {report?.media.map((media) => (
-                                    <img
-                                        key={media?.id}
-                                        src={media?.url}
-                                        alt={`Report media ${media?.id}`}
-                                        className="w-full h-32 object-cover rounded-md"
-                                    />
-                                ))}
-                            </div>
+                    {/* Actions */}
+                    {(onEdit || onDelete) && (
+                        <div className="flex gap-3 pt-4 border-t border-slate-200">
+                            {onEdit && (
+                                <button
+                                    onClick={onEdit}
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 text-sm"
+                                >
+                                    Edit
+                                </button>
+                            )}
+                            {onDelete && (
+                                <button
+                                    onClick={onDelete}
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 text-sm"
+                                >
+                                    Delete
+                                </button>
+                            )}
                         </div>
                     )}
-
-                    {/* Actions */}
-                    <div className="flex gap-3 pt-4 border-t border-slate-200">
-                        {onEdit && (
-                            <button
-                                onClick={onEdit}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 text-sm"
-                            >
-                                Edit
-                            </button>
-                        )}
-                        {onDelete && (
-                            <button
-                                onClick={onDelete}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 text-sm"
-                            >
-                                Delete
-                            </button>
-                        )}
-                    </div>
                 </div>
             </div>
         </>

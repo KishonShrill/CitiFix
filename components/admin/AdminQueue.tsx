@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, CheckCircle, XCircle, Copy, RefreshCw, HelpCircle } from "lucide-react";
+import { X, CheckCircle, XCircle, Copy, RefreshCw, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Report } from "@/lib/api/reports";
 import { toast } from "sonner";
 import { useAdminReports, useVerifyReport, useRejectReport, useDuplicateReport } from "@/hooks/useReports";
@@ -21,6 +21,10 @@ export function AdminQueue({
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
     const [rejectReason, setRejectReason] = useState("");
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+    // Image viewer state
+    const [isViewerOpen, setIsViewerOpen] = useState(false);
+    const [activeMediaIndex, setActiveMediaIndex] = useState(0);
 
     // Refresh controls state
     const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
@@ -270,19 +274,103 @@ export function AdminQueue({
                                             </div>
 
                                             {/* Media */}
-                                            {selectedReport.url && (
-                                                <div>
-                                                    <p className="text-sm font-medium text-slate-900 mb-2">Attached Media</p>
-                                                    <Image
-                                                        key={selectedReport.id}
-                                                        src={selectedReport.url}
-                                                        height={150}
-                                                        width={150}
-                                                        alt="Report media"
-                                                        className="w-full h-fit rounded-md"
-                                                    />
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const reportImages = selectedReport.media && selectedReport.media.length > 0
+                                                    ? selectedReport.media.map(m => m.url)
+                                                    : selectedReport.url
+                                                        ? [selectedReport.url]
+                                                        : [];
+
+                                                if (reportImages.length === 0) return null;
+
+                                                return (
+                                                    <div>
+                                                        <p className="text-sm font-medium text-slate-900 mb-2">
+                                                            Attached Media ({reportImages.length})
+                                                        </p>
+                                                        <div className="flex gap-2 overflow-x-auto pb-2">
+                                                            {reportImages.map((url, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setActiveMediaIndex(idx);
+                                                                        setIsViewerOpen(true);
+                                                                    }}
+                                                                    className="relative w-24 h-24 rounded-md overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0 cursor-pointer bg-slate-100"
+                                                                >
+                                                                    <Image
+                                                                        src={url}
+                                                                        alt={`Report media ${idx + 1}`}
+                                                                        fill
+                                                                        className="object-cover"
+                                                                    />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Fullscreen Image Viewer Modal */}
+                                                        {isViewerOpen && (
+                                                            <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+                                                                {/* Close button */}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setIsViewerOpen(false)}
+                                                                    className="absolute top-4 right-4 text-white hover:text-slate-300 p-2 z-50 bg-black/50 rounded-full cursor-pointer"
+                                                                    title="Close preview"
+                                                                >
+                                                                    <X size={24} />
+                                                                </button>
+
+                                                                {/* Counter */}
+                                                                <div className="absolute top-4 left-4 text-white bg-black/50 px-3 py-1 rounded-full text-sm z-50">
+                                                                    {activeMediaIndex + 1} / {reportImages.length}
+                                                                </div>
+
+                                                                {/* Main Image container */}
+                                                                <div className="relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center">
+                                                                    <Image
+                                                                        src={reportImages[activeMediaIndex]}
+                                                                        alt={`Fullscreen preview ${activeMediaIndex + 1}`}
+                                                                        fill
+                                                                        className="object-contain"
+                                                                    />
+                                                                </div>
+
+                                                                {/* Previous button */}
+                                                                {reportImages.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setActiveMediaIndex((prev) => (prev === 0 ? reportImages.length - 1 : prev - 1));
+                                                                        }}
+                                                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 p-3 rounded-full cursor-pointer z-50"
+                                                                        title="Previous image"
+                                                                    >
+                                                                        <ChevronLeft size={24} />
+                                                                    </button>
+                                                                )}
+
+                                                                {/* Next button */}
+                                                                {reportImages.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setActiveMediaIndex((prev) => (prev === reportImages.length - 1 ? 0 : prev + 1));
+                                                                        }}
+                                                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 p-3 rounded-full cursor-pointer z-50"
+                                                                        title="Next image"
+                                                                    >
+                                                                        <ChevronRight size={24} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
 
 
 
