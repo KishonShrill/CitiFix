@@ -120,10 +120,10 @@ export default function Home() {
             {/* Legend Button */}
             <button
                 onClick={() => setIsLegendOpen(true)}
-                className="cursor-pointer absolute bottom-5 left-4 flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 rounded-xl hover:bg-slate-200 shadow-xl font-bold transition-colors"
+                className="cursor-pointer absolute bottom-5 left-4 flex items-center justify-center gap-1.5 h-11 min-w-11 md:p-4 bg-white text-slate-700 rounded-xl hover:bg-slate-200 shadow-xl font-bold transition-colors"
             >
-                <HelpCircle size={20} />
-                Legend
+                <HelpCircle className="h-5 w-5" />
+                <span className="max-md:hidden">Legend</span>
             </button>
 
             {/* Report Button */}

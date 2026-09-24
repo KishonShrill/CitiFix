@@ -5,6 +5,7 @@ import { useReport } from "@/hooks/useReports";
 import { useMapState } from "@/context/AppState";
 import { X } from "lucide-react";
 import { getIcon } from "@/lib/icons";
+import { cn } from "@/utils/cn";
 
 interface ReportSlideOutProps {
     isOpen: boolean;
@@ -52,23 +53,23 @@ export function ReportSlideOut({
         <>
             {/* Slide-out panel */}
             <div id="slide-out-panel"
-                className={`fixed top-4 w-full sm:w-96
-                bg-white shadow-lg z-50 overflow-y-auto rounded-2xl
-                transition-transform duration-150 ease-in-out
-                ${isOpen ? "translate-x-0 right-4" : "translate-x-full right-0"}
-                `}
+                className={cn("fixed bottom-0 md:top-20 w-full h-fit max-md:max-h-[55vh] max-h-[80vh] md:w-96",
+                    "bg-white shadow-lg z-50 overflow-y-auto rounded-2xl",
+                    "transition-transform duration-200 ease-in-out",
+                    isOpen ? "md:translate-x-0 max-md:translate-y-0 md:right-4" : "md:translate-x-full max-md:translate-y-full right-0"
+                )}
             >
                 {/* Media */}
                 {report?.url && (
                     <>
-                        <div className="w-full">
+                        <div className="w-full bg-gray-200">
                             <Image
                                 key={report?.id}
                                 src={report?.url}
-                                width={384}
+                                width={766}
                                 height={300}
                                 alt={`Report media ${report?.id}`}
-                                className="w-full h-52 object-cover rounded-md"
+                                className="w-full h-52 object-cover mx-auto rounded-t-md"
                             />
                         </div>
                         <button

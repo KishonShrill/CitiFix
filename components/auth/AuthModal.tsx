@@ -59,7 +59,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         setLoading(false);
 
         if (authError) {
-            setError(authError.message || "Sign in failed");
+            setError(authError.message || "Invalid username or password");
             return;
         }
 
