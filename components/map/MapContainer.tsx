@@ -38,6 +38,8 @@ interface MapContainerProps {
     pinLocation?: { lat: number; lng: number };
     /** Fires when the pin is dragged or the map is clicked (in picking mode). */
     onPinLocationChange?: (lat: number, lng: number) => void;
+    /** Panning functionality for the map */
+    flyToLocation?: { lat: number; lng: number };
 }
 
 /*
@@ -121,10 +123,21 @@ export const MapContainer = React.memo(function MapContainer({
     onMove,
     pinLocation,
     onPinLocationChange,
+    flyToLocation,
 }: MapContainerProps) {
     const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
     const [iliganBoundaryData, setIliganBoundaryData] = useState<any>(null);
     const mapRef = useRef<MapRef>(null);
+
+    useEffect(() => {
+        if (flyToLocation && mapRef.current) {
+            mapRef.current.flyTo({
+                center: [flyToLocation.lng, flyToLocation.lat],
+                zoom: 16,
+                duration: 1000,
+            });
+        }
+    }, [flyToLocation]);
 
     useEffect(() => {
         fetch("/data/iligan-city-boundary.json")
