@@ -195,7 +195,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                     </form>
 
                     {/* Social Providers */}
-                    {GOOGLE_CLIENT || GITHUB_CLIENT && (
+                    {(GOOGLE_CLIENT || GITHUB_CLIENT) && (
                         <div className="mt-6">
                             <div className="relative mb-6">
                                 <div className="absolute inset-0 flex items-center">
@@ -206,7 +206,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className={`grid ${(GOOGLE_CLIENT && GITHUB_CLIENT) ? 'grid-cols-2' : ''} gap-3`}>
                                 {GOOGLE_CLIENT && (
                                     <button
                                         type="button"
