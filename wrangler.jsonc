@@ -5,6 +5,19 @@
     "compatibility_flags": [
         "nodejs_compat"
     ],
+    "observability": {
+        "logs": {
+            "enabled": true,
+            "head_sampling_rate": 1,
+            "invocation_logs": true,
+            "persist": true
+        },
+        "traces": {
+            "enabled": false,
+            "head_sampling_rate": 1,
+            "persist": true
+        }
+    },
     "main": "vinext/server/fetch-handler",
     "assets": {
         "directory": "dist/client",
@@ -17,8 +30,8 @@
     "services": [
         {
             "binding": "WORKER_SELF_REFERENCE",
-            "service": "citifix",
-        },
+            "service": "citifix"
+        }
     ],
     "images": {
         "binding": "IMAGES"
