@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Image from "next/image";
+import { animate, createScope, createDraggable } from 'animejs';
 import { useReport } from "@/hooks/useReports";
 import { useMapState } from "@/context/AppState";
 import { X } from "lucide-react";
@@ -20,8 +22,28 @@ export function ReportSlideOut({
     onEdit,
     onDelete,
 }: ReportSlideOutProps) {
+    const panelRef = useRef<HTMLDivElement>(null);
     const { selectedReportId } = useMapState();
     const { data: report, isLoading } = useReport(selectedReportId || "");
+
+    useEffect(() => {
+        if (!panelRef.current || !isOpen) return;
+
+        const draggable = createDraggable(panelRef.current, {
+            x: false,
+            snap: 446,
+            y: { snap: [0, -280] }
+        });
+
+        animate(panelRef.current, {
+            duration: 0,       // Moves the element instantly
+            easing: 'linear'   // Removes the acceleration/deceleration curve
+        });
+
+        return () => {
+            draggable.revert();
+        };
+    }, [isOpen]);
 
     const statusColors: Record<string, string> = {
         submitted: "bg-yellow-100 text-yellow-800",
@@ -37,14 +59,6 @@ export function ReportSlideOut({
         high: "bg-red-100 text-red-800",
     };
 
-    if (isLoading && isOpen) {
-        return (
-            <div className={`fixed top-0 bottom-0 right-0 w-full sm:w-96 bg-white shadow-lg z-50 p-6 flex items-center justify-center transition-transform duration-150 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
-                <p className="text-slate-500">Loading details...</p>
-            </div>
-        );
-    }
-
     if (!report && isOpen) return null;
 
     const ProblemIcon = getIcon(report?.problemType.icon as string);
@@ -52,10 +66,12 @@ export function ReportSlideOut({
     return (
         <>
             {/* Slide-out panel */}
-            <div id="slide-out-panel"
-                className={cn("fixed bottom-0 md:top-20 w-full h-fit max-md:max-h-[55vh] max-h-[80vh] md:w-96",
+            <div
+                ref={panelRef}
+                id="slide-out-panel"
+                className={cn("fixed bottom-0 md:top-20 w-full h-fit max-md:max-h-[55dvh] max-h-[80dvh] md:w-96",
                     "bg-white shadow-lg z-50 overflow-y-auto rounded-2xl",
-                    "transition-transform duration-200 ease-in-out",
+                    "",
                     isOpen ? "md:translate-x-0 max-md:translate-y-0 md:right-4" : "md:translate-x-full max-md:translate-y-full right-0"
                 )}
             >
@@ -84,9 +100,9 @@ export function ReportSlideOut({
                     {/* Header */}
                     <div className="flex items-start justify-between mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900">{report?.title}</h2>
+                            <h2 className="text-2xl font-bold text-slate-900">{isLoading ? 'Loading...' : report?.title}</h2>
                             <p className="text-sm text-slate-600 mt-1">
-                                {report?.createdAt ? new Date(report.createdAt).toLocaleDateString() : ""}
+                                {isLoading ? 'loading...' : report?.createdAt ? new Date(report.createdAt).toLocaleDateString() : ""}
                             </p>
                         </div>
                         {!report?.url && (
