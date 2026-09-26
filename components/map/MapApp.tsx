@@ -34,7 +34,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
     // Deep link initialization state
     const [initialReportId, setInitialReportId] = useState<string | null>(initialReportIdFromUrl || null);
     const [hasDoneInitialPan, setHasDoneInitialPan] = useState(false);
-    const [panLocation, setPanLocation] = useState<{lat: number, lng: number} | undefined>();
+    const [panLocation, setPanLocation] = useState<{ lat: number, lng: number } | undefined>();
 
     // If an initial report is set via props, initialize selectedReportId
     useEffect(() => {
@@ -202,7 +202,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
             />
 
             {isPickingLocation && !isReportModalOpen && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-4 rounded-xl shadow-lg border border-slate-200 z-30 flex flex-col items-center gap-3 w-[90%] max-w-sm">
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-4 rounded-xl shadow-lg border border-slate-200 z-50 flex flex-col items-center gap-3 w-[90%] max-w-sm">
                     <p className="text-sm font-medium text-slate-800 text-center">
                         Drag the pin or tap the map to set the exact location
                     </p>

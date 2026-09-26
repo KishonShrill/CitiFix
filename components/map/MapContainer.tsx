@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, SetStateAction, Dispatch } from "react";
 import MapGL, {
     Source,
     Layer,
