@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { animate, createScope, createDraggable } from 'animejs';
+import { animate, createDraggable } from 'animejs';
 import { useReport } from "@/hooks/useReports";
 import { useMapState } from "@/context/AppState";
 import { X } from "lucide-react";
@@ -23,27 +23,52 @@ export function ReportSlideOut({
     onDelete,
 }: ReportSlideOutProps) {
     const panelRef = useRef<HTMLDivElement>(null);
+    const grabRef = useRef<HTMLDivElement>(null);
     const { selectedReportId } = useMapState();
     const { data: report, isLoading } = useReport(selectedReportId || "");
 
     useEffect(() => {
-        if (!panelRef.current || !isOpen) return;
+        if (!panelRef.current || !grabRef.current) return;
 
-        const draggable = createDraggable(panelRef.current, {
+        const panel = panelRef.current;
+        const height = window.innerHeight;
+
+        function getSnapPoints() {
+            console.log(height)
+            return [
+                0,
+                height * 0.45,
+                height * 0.75,
+            ];
+        }
+
+        console.log(getSnapPoints())
+        const snapPoints = getSnapPoints();
+
+        const draggable = createDraggable(panel, {
+            trigger: grabRef.current,
             x: false,
-            snap: 446,
-            y: { snap: [0, -280] }
-        });
-
-        animate(panelRef.current, {
-            duration: 0,       // Moves the element instantly
-            easing: 'linear'   // Removes the acceleration/deceleration curve
+            y: {
+                snap: snapPoints
+            },
+            releaseStiffness: 35,
+            releaseEase: 'out(3)'
         });
 
         return () => {
             draggable.revert();
         };
-    }, [isOpen]);
+    }, []);
+
+    useEffect(() => {
+        if (!panelRef.current || !grabRef.current) return;
+
+        const panel = panelRef.current;
+        animate(panel, {
+            duration: 350,
+            ease: "out(3)",
+        });
+    }, [report])
 
     const statusColors: Record<string, string> = {
         submitted: "bg-yellow-100 text-yellow-800",
@@ -59,7 +84,7 @@ export function ReportSlideOut({
         high: "bg-red-100 text-red-800",
     };
 
-    if (!report && isOpen) return null;
+    //if (!report && isOpen) return null;
 
     const ProblemIcon = getIcon(report?.problemType.icon as string);
 
@@ -69,12 +94,18 @@ export function ReportSlideOut({
             <div
                 ref={panelRef}
                 id="slide-out-panel"
-                className={cn("fixed bottom-0 md:top-20 w-full h-fit max-md:max-h-[55dvh] max-h-[80dvh] md:w-96",
+                className={cn(
+                    "fixed top-[100%] w-full h-fit max-md:max-h-[55dvh]",
                     "bg-white shadow-lg z-50 overflow-y-auto rounded-2xl",
-                    "",
-                    isOpen ? "md:translate-x-0 max-md:translate-y-0 md:right-4" : "md:translate-x-full max-md:translate-y-full right-0"
+                    "md:top-20 md:w-96 md:max-h-[80dvh]",
+                    isOpen
+                        ? "md:translate-x-0 md:right-4"
+                        : "md:translate-x-full right-0"
                 )}
             >
+                <div ref={grabRef} className="absolute top-0 right-0 w-full py-4">
+                    <div className="mx-auto h-1.5 w-12 rounded-full bg-slate-200" />
+                </div>
                 {/* Media */}
                 {report?.url && (
                     <>
@@ -85,7 +116,7 @@ export function ReportSlideOut({
                                 width={766}
                                 height={300}
                                 alt={`Report media ${report?.id}`}
-                                className="w-full h-52 object-cover mx-auto rounded-t-md"
+                                className="w-full h-52 object-cover mx-auto rounded-t-md pointer-events-none select-none"
                             />
                         </div>
                         <button

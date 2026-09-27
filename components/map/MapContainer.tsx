@@ -202,7 +202,9 @@ export const MapContainer = React.memo(function MapContainer({
                     latitude: center[1],
                     zoom,
                 }}
-                mapStyle="https://tiles.openfreemap.org/styles/liberty"
+                //mapStyle="https://tiles.openfreemap.org/styles/liberty"
+                mapStyle="https://demotiles.maplibre.org/globe.json"
+                maxTileCacheSize={5}
                 terrain={{
                     source: "terrain-source",
                     exaggeration: isTerrainEnabled ? 1 : 0,
@@ -305,6 +307,6 @@ export const MapContainer = React.memo(function MapContainer({
                     </Marker>
                 )}
             </MapGL>
-        </div>
+        </div >
     );
 });
