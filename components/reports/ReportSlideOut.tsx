@@ -27,48 +27,79 @@ export function ReportSlideOut({
     const { selectedReportId } = useMapState();
     const { data: report, isLoading } = useReport(selectedReportId || "");
 
+    const draggableRef = useRef<any>(null);
+    const onCloseRef = useRef(onClose);
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
+
     useEffect(() => {
         if (!panelRef.current || !grabRef.current) return;
+        if (window.innerWidth >= 768) return;
 
         const panel = panelRef.current;
         const height = window.innerHeight;
 
-        function getSnapPoints() {
-            console.log(height)
-            return [
-                0,
-                height * 0.45,
-                height * 0.75,
-            ];
-        }
+        const peekY = -120;
+        const midY = -height * 0.45;
+        const fullY = -height + 61;
 
-        console.log(getSnapPoints())
-        const snapPoints = getSnapPoints();
+        const snapPoints = [0, peekY, midY, fullY];
 
         const draggable = createDraggable(panel, {
             trigger: grabRef.current,
             x: false,
-            y: {
-                snap: snapPoints
-            },
-            releaseStiffness: 35,
-            releaseEase: 'out(3)'
+            y: { snap: snapPoints },
+            releaseStiffness: 75,
+            releaseEase: 'out(5)',
+            onSettle: (d: any) => {
+                if (d.y >= -10) {
+                    onCloseRef.current();
+                }
+            }
         });
+
+        draggableRef.current = draggable;
 
         return () => {
-            draggable.revert();
+            if (draggableRef.current && typeof draggableRef.current.revert === 'function') {
+                draggableRef.current.revert();
+            }
+            draggableRef.current = null;
         };
-    }, []);
+    }, []); // Run initialization once
 
     useEffect(() => {
-        if (!panelRef.current || !grabRef.current) return;
-
         const panel = panelRef.current;
-        animate(panel, {
-            duration: 350,
-            ease: "out(3)",
-        });
-    }, [report])
+        if (!panel) return;
+
+        if (window.innerWidth < 768) {
+            // Manage sliding internally
+            if (isOpen && selectedReportId) {
+                const height = window.innerHeight;
+                animate(panel, {
+                    y: -height * 0.45,
+                    duration: 350,
+                    ease: "out(3)",
+                }).then(() => {
+                    // Update instance internally so next drag doesn't jump
+                    if (draggableRef.current && typeof draggableRef.current.setY === 'function') {
+                        draggableRef.current.setY(-height * 0.45, true);
+                    }
+                });
+            } else if (!isOpen) {
+                animate(panel, {
+                    y: 0,
+                    duration: 350,
+                    ease: "out(3)",
+                }).then(() => {
+                    if (draggableRef.current && typeof draggableRef.current.setY === 'function') {
+                        draggableRef.current.setY(0, true);
+                    }
+                });
+            }
+        }
+    }, [isOpen, selectedReportId]); // Animate on open or ID change!
 
     const statusColors: Record<string, string> = {
         submitted: "bg-yellow-100 text-yellow-800",
@@ -95,21 +126,23 @@ export function ReportSlideOut({
                 ref={panelRef}
                 id="slide-out-panel"
                 className={cn(
-                    "fixed top-[100%] w-full h-fit max-md:max-h-[55dvh]",
-                    "bg-white shadow-lg z-50 overflow-y-auto rounded-2xl",
-                    "md:top-20 md:w-96 md:max-h-[80dvh]",
+                    "fixed bg-white shadow-lg z-50 overflow-y-auto",
+                    // Mobile bottom sheet styles
+                    "top-[100%] w-full max-md:h-dvh rounded-t-2xl",
+                    // Desktop styles
+                    "md:top-20 md:h-fit md:w-96 md:max-h-[80dvh] md:rounded-2xl",
                     isOpen
                         ? "md:translate-x-0 md:right-4"
                         : "md:translate-x-full right-0"
                 )}
             >
-                <div ref={grabRef} className="absolute top-0 right-0 w-full py-4">
+                <div ref={grabRef} className="absolute top-0 right-0 w-full py-4 md:hidden cursor-grab active:cursor-grabbing">
                     <div className="mx-auto h-1.5 w-12 rounded-full bg-slate-200" />
                 </div>
                 {/* Media */}
                 {report?.url && (
                     <>
-                        <div className="w-full bg-gray-200">
+                        <div className="max-md:hidden w-full bg-gray-200">
                             <Image
                                 key={report?.id}
                                 src={report?.url}
@@ -121,7 +154,7 @@ export function ReportSlideOut({
                         </div>
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 bg-white rounded-full text-slate-400 hover:text-slate-600 p-1"
+                            className="max-md:hidden absolute top-4 right-4 bg-white rounded-full text-slate-400 hover:text-slate-600 p-1"
                         >
                             <X size={20} />
                         </button>
@@ -136,18 +169,29 @@ export function ReportSlideOut({
                                 {isLoading ? 'loading...' : report?.createdAt ? new Date(report.createdAt).toLocaleDateString() : ""}
                             </p>
                         </div>
-                        {!report?.url && (
-                            <button
-                                onClick={onClose}
-                                className="text-slate-400 hover:text-slate-600 p-1"
-                            >
-                                <X size={20} />
-                            </button>
-                        )}
+                        <button
+                            onClick={onClose}
+                            className="hidden max-md:block text-slate-400 hover:text-slate-600 p-1"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
 
+                    {report?.url && (
+                        <div className="md:hidden w-full bg-gray-200">
+                            <Image
+                                key={report?.id}
+                                src={report?.url}
+                                width={766}
+                                height={300}
+                                alt={`Report media ${report?.id}`}
+                                className="w-full h-52 object-cover mx-auto rounded-t-md pointer-events-none select-none"
+                            />
+                        </div>
+                    )}
+
                     {/* Category & Problem Type */}
-                    <div className="mb-6 p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
+                    <div className="mb-6 p-3 bg-slate-50 rounded-b-lg md:rounded-lg border border-slate-200 space-y-2">
                         <div className="flex items-center gap-2">
                             <span
                                 className="w-3 h-3 rounded-full inline-block"
