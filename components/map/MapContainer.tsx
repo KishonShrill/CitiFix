@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, SetStateAction, Dispatch } from "react";
 import MapGL, {
     Source,
     Layer,
@@ -118,7 +118,7 @@ export const MapContainer = React.memo(function MapContainer({
     selectedReportId,
     onReportSelect,
     onBoundsChange,
-    center = [124.2452, 8.228],
+    center = [124.2511, 8.2283],
     zoom = 16,
     onMove,
     pinLocation,
@@ -144,6 +144,8 @@ export const MapContainer = React.memo(function MapContainer({
             .then(res => res.json())
             .then(data => setIliganBoundaryData(data))
             .catch(err => console.error("Failed to load boundary data:", err));
+
+        console.log(center)
     }, []);
 
     /*
@@ -203,6 +205,8 @@ export const MapContainer = React.memo(function MapContainer({
                     zoom,
                 }}
                 mapStyle="https://tiles.openfreemap.org/styles/liberty"
+                //mapStyle="https://demotiles.maplibre.org/globe.json"
+                maxTileCacheSize={5}
                 terrain={{
                     source: "terrain-source",
                     exaggeration: isTerrainEnabled ? 1 : 0,
@@ -305,6 +309,6 @@ export const MapContainer = React.memo(function MapContainer({
                     </Marker>
                 )}
             </MapGL>
-        </div>
+        </div >
     );
 });

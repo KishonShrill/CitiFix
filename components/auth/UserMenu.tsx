@@ -36,7 +36,7 @@ export function UserMenu({ user, onMyReportsClick, onAdminClick }: UserMenuProps
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="cursor-pointer flex items-center gap-2 px-3 py-1 text-slate-700 hover:bg-slate-100 rounded-md"
+                className="cursor-pointer flex items-center gap-2 px-3 py-1 bg-white text-slate-700 hover:bg-slate-100 rounded-lg shadow-lg"
             >
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                     {user.name?.charAt(0).toUpperCase() || "U"}
