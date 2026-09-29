@@ -110,7 +110,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
             />
 
             {/* Modal */}
-            <div className="fixed max-h-[95dvh] flex items-center justify-center sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md z-50">
+            <div className="fixed max-h-[95dvh] flex items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-50">
                 <div className="p-6 h-fit bg-white shadow-xl rounded-lg inset-4 sm:inset-auto">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">

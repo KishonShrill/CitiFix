@@ -103,7 +103,7 @@ interface LocationContextType {
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
 export function LocationProvider({ children }: { children: ReactNode }) {
-    const [userLocation, setUserLocation] = useState<[number, number]>([124.24, 8.24]);
+    const [userLocation, setUserLocation] = useState<[number, number]>([124.2418, 8.2302]);
 
     useEffect(() => {
         let mounted = true;

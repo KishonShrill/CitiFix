@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useUI, useMapState, useUserLocation } from "@/context/AppState";
 import { MapContainer } from "@/components/map/MapContainer";
 import { ReportModal } from "@/components/reports/ReportModal";
@@ -113,11 +114,16 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
             />
 
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 right-0 bg-white shadow-sm z-30 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                        B
-                    </div>
+            <div className="absolute top-0 left-0 right-0 z-30 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg shadow-lg">
+                    <Image
+                        src="/images/logos/betteriligan-logo.png"
+                        alt="BetterIligan Logo"
+                        width={75}
+                        height={75}
+                        loading="eager"
+                        className="h-8 w-8 rounded-lg object-cover"
+                    />
                     <h1 className="font-bold text-slate-900">CitiFix</h1>
                 </div>
 
@@ -141,7 +147,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                     ) : (
                         <button
                             onClick={() => setIsAuthModalOpen(true)}
-                            className="cursor-pointer px-3 py-2 text-slate-900 border border-slate-300 rounded-md hover:bg-slate-50 text-sm font-medium"
+                            className="cursor-pointer px-3 py-2 text-slate-900 border bg-white border-slate-300 rounded-md shadow-lg hover:bg-slate-50 text-sm font-medium"
                         >
                             Sign In
                         </button>
