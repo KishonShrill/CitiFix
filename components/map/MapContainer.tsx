@@ -118,7 +118,7 @@ export const MapContainer = React.memo(function MapContainer({
     selectedReportId,
     onReportSelect,
     onBoundsChange,
-    center = [124.2452, 8.228],
+    center = [124.2511, 8.2283],
     zoom = 16,
     onMove,
     pinLocation,
@@ -202,8 +202,8 @@ export const MapContainer = React.memo(function MapContainer({
                     latitude: center[1],
                     zoom,
                 }}
-                //mapStyle="https://tiles.openfreemap.org/styles/liberty"
-                mapStyle="https://demotiles.maplibre.org/globe.json"
+                mapStyle="https://tiles.openfreemap.org/styles/liberty"
+                //mapStyle="https://demotiles.maplibre.org/globe.json"
                 maxTileCacheSize={5}
                 terrain={{
                     source: "terrain-source",
