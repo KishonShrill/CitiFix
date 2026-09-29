@@ -1,8 +1,9 @@
 import { getDB } from "@/lib/db";
-import { report } from "@/lib/report-schema";
+import { report, media } from "@/lib/report-schema";
 import { requireRole, createAuditLog } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { eq } from "drizzle-orm";
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 
 const VALID_STATUSES = ["submitted", "under_review", "verified", "rejected", "duplicate", "resolved", "hidden"] as const;
 
@@ -25,7 +26,7 @@ export async function POST(
         return sendError(404, "NOT_FOUND", "Report not found");
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as { status?: typeof VALID_STATUSES[number]; reason?: string };
     const { status: newStatus, reason } = body;
 
     if (!newStatus || !VALID_STATUSES.includes(newStatus)) {
@@ -36,10 +37,41 @@ export async function POST(
         return sendError(400, "NO_CHANGE", "Report is already in this status");
     }
 
+    // If changing status to rejected, delete Cloudinary images first
+    if (newStatus === "rejected") {
+        const reportMedia = await db
+            .select()
+            .from(media)
+            .where(eq(media.reportId, id));
+
+        for (const item of reportMedia) {
+            if (item.cloudinaryPublicId) {
+                try {
+                    await deleteCloudinaryImage(item.cloudinaryPublicId);
+                } catch (error) {
+                    console.error(`Error deleting Cloudinary media ${item.cloudinaryPublicId}:`, error);
+                    return sendError(
+                        502,
+                        "MEDIA_DELETION_FAILED",
+                        `Failed to delete image from storage: ${error instanceof Error ? error.message : "Service error"}. Report status was not updated.`
+                    );
+                }
+            }
+        }
+
+        if (reportMedia.length > 0) {
+            await db.delete(media).where(eq(media.reportId, id));
+        }
+    }
+
     const updates: Record<string, unknown> = {
         status: newStatus,
         updatedAt: new Date(),
     };
+
+    if (newStatus === "rejected") {
+        updates.media = null;
+    }
 
     // Set publishedAt when verifying
     if (newStatus === "verified" && !foundReport.publishedAt) {

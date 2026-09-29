@@ -4,13 +4,7 @@ import { requireUser } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { nanoid } from "nanoid";
 import { eq, asc } from "drizzle-orm";
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { getCloudinary } from "@/lib/cloudinary";
 
 export async function GET(
     _request: Request,
@@ -78,7 +72,7 @@ export async function POST(
 
     let signature: string;
     try {
-        signature = cloudinary.utils.api_sign_request(
+        signature = getCloudinary().utils.api_sign_request(
             {
                 timestamp,
                 folder,
