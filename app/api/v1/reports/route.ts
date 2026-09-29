@@ -9,7 +9,7 @@ import { eq, and, desc, sql } from "drizzle-orm";
 export async function GET(request: Request) {
     const db = getDB();
     const url = new URL(request.url);
-    const { limit, offset } = parsePagination(url, 50, 100);
+    const { limit, offset } = parsePagination(url, 50, 1000);
 
     // Parse filters
     const status = url.searchParams.get("status") ?? undefined;

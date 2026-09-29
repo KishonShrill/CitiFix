@@ -62,7 +62,11 @@ export function useReports(params?: UseReportsParams) {
     return useQuery({
         queryKey: ["reports", params],
         queryFn: () => api.getReports(params),
-        enabled: params?.minLat !== undefined && params?.maxLat !== undefined,
+        staleTime: Infinity,
+        gcTime: 1000 * 60 * 60, // 1 hour
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
         placeholderData: keepPreviousData,
     });
 }
@@ -96,9 +100,38 @@ export function useCreateReport() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: api.createReport,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["reports"] });
-            queryClient.invalidateQueries({ queryKey: ["userReports"] });
+        onSuccess: (newReport) => {
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["userReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: [newReport, ...oldData.data],
+                        meta: {
+                            ...oldData.meta,
+                            total: oldData.meta.total + 1,
+                        },
+                    };
+                }
+            );
+
+            if (newReport.status === "verified") {
+                queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                    { queryKey: ["reports"] },
+                    (oldData) => {
+                        if (!oldData) return oldData;
+                        return {
+                            ...oldData,
+                            data: [newReport, ...oldData.data],
+                            meta: {
+                                ...oldData.meta,
+                                total: oldData.meta.total + 1,
+                            },
+                        };
+                    }
+                );
+            }
         },
     });
 }
@@ -108,11 +141,31 @@ export function useUpdateReport() {
     return useMutation({
         mutationFn: ({ publicId, data }: { publicId: string; data: Partial<api.CreateReportInput> }) =>
             api.updateReport(publicId, data),
-        onSuccess: (_, { publicId }) => {
-            queryClient.invalidateQueries({ queryKey: ["report", publicId] });
-            queryClient.invalidateQueries({ queryKey: ["userReport", publicId] });
-            queryClient.invalidateQueries({ queryKey: ["reports"] });
-            queryClient.invalidateQueries({ queryKey: ["userReports"] });
+        onSuccess: (updatedReport, { publicId }) => {
+            queryClient.setQueryData(["report", publicId], updatedReport);
+            queryClient.setQueryData(["userReport", publicId], updatedReport);
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["reports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.map((r) => (r.id === publicId ? { ...r, ...updatedReport } : r)),
+                    };
+                }
+            );
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["userReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.map((r) => (r.id === publicId ? { ...r, ...updatedReport } : r)),
+                    };
+                }
+            );
         },
     });
 }
@@ -121,9 +174,39 @@ export function useDeleteReport() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: api.deleteReport,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["reports"] });
-            queryClient.invalidateQueries({ queryKey: ["userReports"] });
+        onSuccess: (_, publicId) => {
+            queryClient.removeQueries({ queryKey: ["report", publicId] });
+            queryClient.removeQueries({ queryKey: ["userReport", publicId] });
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["reports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== publicId),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["userReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== publicId),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
         },
     });
 }
@@ -155,10 +238,42 @@ export function useVerifyReport() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => api.verifyReportAdmin(id),
-        onSuccess: (_, id) => {
-            queryClient.invalidateQueries({ queryKey: ["reports"] });
-            queryClient.invalidateQueries({ queryKey: ["adminReports"] });
-            queryClient.invalidateQueries({ queryKey: ["report", id] });
+        onSuccess: (verifiedReport, id) => {
+            queryClient.setQueryData(["report", id], verifiedReport);
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["reports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    const exists = oldData.data.some((r) => r.id === id);
+                    const newData = exists
+                        ? oldData.data.map((r) => (r.id === id ? verifiedReport : r))
+                        : [verifiedReport, ...oldData.data];
+                    return {
+                        ...oldData,
+                        data: newData,
+                        meta: {
+                            ...oldData.meta,
+                            total: exists ? oldData.meta.total : oldData.meta.total + 1,
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["adminReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
         },
     });
 }
@@ -168,9 +283,42 @@ export function useRejectReport() {
     return useMutation({
         mutationFn: ({ id, reason }: { id: string; reason: string }) => api.rejectReportAdmin(id, reason),
         onSuccess: (_, { id }) => {
-            queryClient.invalidateQueries({ queryKey: ["reports"] });
-            queryClient.invalidateQueries({ queryKey: ["adminReports"] });
-            queryClient.invalidateQueries({ queryKey: ["report", id] });
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["reports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    const exists = oldData.data.some((r) => r.id === id);
+                    if (!exists) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["adminReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueryData(["report", id], (old: api.Report | undefined) => {
+                if (!old) return old;
+                return { ...old, status: "rejected" as const, media: undefined };
+            });
         },
     });
 }
@@ -180,9 +328,42 @@ export function useDuplicateReport() {
     return useMutation({
         mutationFn: ({ id, duplicateOfId }: { id: string; duplicateOfId?: string }) => api.duplicateReportAdmin(id, duplicateOfId),
         onSuccess: (_, { id }) => {
-            queryClient.invalidateQueries({ queryKey: ["reports"] });
-            queryClient.invalidateQueries({ queryKey: ["adminReports"] });
-            queryClient.invalidateQueries({ queryKey: ["report", id] });
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["reports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    const exists = oldData.data.some((r) => r.id === id);
+                    if (!exists) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["adminReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueryData(["report", id], (old: api.Report | undefined) => {
+                if (!old) return old;
+                return { ...old, status: "duplicate" as const };
+            });
         },
     });
 }
