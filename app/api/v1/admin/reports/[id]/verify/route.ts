@@ -1,5 +1,5 @@
 import { getDB } from "@/lib/db";
-import { report } from "@/lib/report-schema";
+import { report, category, problemType } from "@/lib/report-schema";
 import { requireRole, createAuditLog } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { eq } from "drizzle-orm";
@@ -29,11 +29,41 @@ export async function POST(
     }
 
     const now = new Date();
-    const [updated] = await db
+    await db
         .update(report)
         .set({ status: "verified", publishedAt: now, updatedAt: now })
+        .where(eq(report.id, id));
+
+    const [fullReport] = await db
+        .select({
+            id: report.id,
+            title: report.title,
+            description: report.description,
+            url: report.media,
+            latitude: report.latitude,
+            longitude: report.longitude,
+            address: report.address,
+            barangay: report.barangay,
+            severity: report.severity,
+            status: report.status,
+            createdAt: report.createdAt,
+            publishedAt: report.publishedAt,
+            category: {
+                id: category.id,
+                name: category.name,
+                color: category.color,
+            },
+            problemType: {
+                id: problemType.id,
+                name: problemType.name,
+                icon: problemType.icon,
+            },
+        })
+        .from(report)
+        .innerJoin(category, eq(report.categoryId, category.id))
+        .innerJoin(problemType, eq(report.problemTypeId, problemType.id))
         .where(eq(report.id, id))
-        .returning();
+        .limit(1);
 
     await createAuditLog(
         user.id,
@@ -43,5 +73,5 @@ export async function POST(
         { previousStatus: foundReport.status, newStatus: "verified" }
     );
 
-    return sendSuccess(updated);
+    return sendSuccess(fullReport || foundReport);
 }

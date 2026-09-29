@@ -29,7 +29,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
         isAuthModalOpen, setIsAuthModalOpen
     } = useUI();
 
-    const { mapBounds, setMapBounds, selectedReportId, setSelectedReportId } = useMapState();
+    const { selectedReportId, setSelectedReportId } = useMapState();
     const { userLocation } = useUserLocation();
 
     // Deep link initialization state
@@ -71,14 +71,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
         }
     }, [selectedReportId]);
 
-    const { data: reportsData, isFetching: reportsFetching } = useReports(
-        mapBounds ? {
-            minLat: mapBounds.minLat,
-            maxLat: mapBounds.maxLat,
-            minLng: mapBounds.minLng,
-            maxLng: mapBounds.maxLng,
-        } : undefined
-    );
+    const { data: reportsData, isFetching: reportsFetching } = useReports({ limit: 500 });
 
     const handleOpenReportModal = () => {
         if (!user) {
@@ -105,7 +98,6 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                 reports={reportsData?.data || []}
                 selectedReportId={selectedReportId || undefined}
                 onReportSelect={setSelectedReportId}
-                onBoundsChange={setMapBounds}
                 center={userLocation}
                 zoom={13}
                 flyToLocation={panLocation}
