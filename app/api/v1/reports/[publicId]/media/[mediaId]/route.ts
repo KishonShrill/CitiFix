@@ -3,14 +3,7 @@ import { report, media } from "@/lib/report-schema";
 import { requireUser } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { eq } from "drizzle-orm";
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.NEXT_PIBLIC_CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 
 export async function DELETE(
     request: Request,
@@ -47,7 +40,7 @@ export async function DELETE(
 
     // Attempt to delete from cloudinary silently
     try {
-        await cloudinary.uploader.destroy(foundMedia.cloudinaryPublicId);
+        await deleteCloudinaryImage(foundMedia.cloudinaryPublicId);
     } catch (e) {
         console.error("Cloudinary destroy failed:", e);
         // Continue and delete from db anyway
