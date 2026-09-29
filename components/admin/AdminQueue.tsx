@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, CheckCircle, XCircle, Copy, RefreshCw, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, CheckCircle, XCircle, Copy, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Report } from "@/lib/api/reports";
 import { toast } from "sonner";
 import { useAdminReports, useVerifyReport, useRejectReport, useDuplicateReport } from "@/hooks/useReports";
 import { getIcon } from "@/lib/icons";
 import { LegendModal } from "@/components/common/LegendModal";
+import { cn } from "@/utils/cn";
 
 interface AdminQueueProps {
     isOpen: boolean;
@@ -130,330 +131,364 @@ export function AdminQueue({
             />
 
             {/* Modal */}
-            <div className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-5xl bg-white rounded-lg shadow-xl z-50 overflow-y-auto max-h-[95dvh]">
-                <div className="p-6">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-lg lg:text-2xl font-bold text-slate-900">Moderation Queue</h2>
-                            <p className="text-sm text-slate-600 mt-1">
-                                {pendingReports.length} report{pendingReports.length !== 1 ? "s" : ""} pending review
-                            </p>
-                        </div>
+            <div className="fixed inset-3 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-5xl bg-white rounded-xl shadow-2xl z-50 flex flex-col h-[95dvh] sm:h-[80dvh] overflow-hidden">
+                {/* Header */}
+                <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                    <div>
+                        <h2 className="text-lg lg:text-2xl font-bold text-slate-900">Moderation Queue</h2>
+                        <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
+                            {pendingReports.length} report{pendingReports.length !== 1 ? "s" : ""} pending review
+                        </p>
+                    </div>
 
-                        <div className="flex items-center gap-4">
-                            {/* Refresh controls */}
-                            <div className="flex items-center gap-2 relative">
-                                <div className="flex items-center gap-2 border border-slate-200 rounded-md py-1 px-2">
-                                    <label className="text-xs font-medium text-slate-600 flex items-center gap-1 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="rounded cursor-pointer text-blue-600 focus:ring-blue-500"
-                                            checked={autoRefreshEnabled}
-                                            onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
-                                        />
-                                        Auto-refresh
-                                    </label>
+                    <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                        {/* Refresh controls */}
+                        <div className="flex items-center gap-2 relative">
+                            <div className="flex items-center gap-1.5 sm:gap-2 border border-slate-200 rounded-md py-1 px-2">
+                                <label className="text-xs font-medium text-slate-600 flex items-center gap-1 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="rounded cursor-pointer text-blue-600 focus:ring-blue-500"
+                                        checked={autoRefreshEnabled}
+                                        onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                                    />
+                                    <span className="hidden sm:inline">Auto-refresh</span>
+                                    <span className="sm:hidden">Auto</span>
+                                </label>
 
-                                    <select
-                                        className="text-xs border-none bg-slate-50 focus:ring-0 p-1 rounded text-slate-700 outline-none"
-                                        disabled={!autoRefreshEnabled}
-                                        value={autoRefreshInterval}
-                                        onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
-                                    >
-                                        <option value={60000}>1 min</option>
-                                        <option value={120000}>2 min</option>
-                                        <option value={300000}>5 min</option>
-                                    </select>
-                                </div>
-
-                                <button
-                                    onClick={handleManualRefresh}
-                                    disabled={cooldownRemaining > 0 || isRefetching}
-                                    className="hover:cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                <select
+                                    className="text-xs border-none bg-slate-50 focus:ring-0 p-0.5 sm:p-1 rounded text-slate-700 outline-none"
+                                    disabled={!autoRefreshEnabled}
+                                    value={autoRefreshInterval}
+                                    onChange={(e) => setAutoRefreshInterval(Number(e.target.value))}
                                 >
-                                    <RefreshCw size={14} className={isRefetching ? "animate-spin" : ""} />
-                                    {cooldownRemaining > 0 ? `Wait ${cooldownRemaining}s` : "Refresh"}
-                                </button>
-
-                                {/*
-                                <button
-                                    onClick={() => setIsLegendOpen(true)}
-                                    className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md"
-                                    title="View Legend"
-                                >
-                                    <HelpCircle size={20} />
-                                </button>
-                                */}
+                                    <option value={60000}>1m</option>
+                                    <option value={120000}>2m</option>
+                                    <option value={300000}>5m</option>
+                                </select>
                             </div>
 
-                            <div className="h-6 w-px bg-slate-200 mx-1"></div>
-
                             <button
-                                onClick={onClose}
-                                className="cursor-pointer text-slate-400 hover:text-slate-600 p-1"
+                                onClick={handleManualRefresh}
+                                disabled={cooldownRemaining > 0 || isRefetching}
+                                className="hover:cursor-pointer flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-xs sm:text-sm font-medium hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
-                                <X size={20} />
+                                <RefreshCw size={13} className={isRefetching ? "animate-spin" : ""} />
+                                <span>{cooldownRemaining > 0 ? `${cooldownRemaining}s` : "Refresh"}</span>
                             </button>
+                        </div>
+
+                        <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+
+                        <button
+                            onClick={onClose}
+                            className="cursor-pointer text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Modal Body Container */}
+                <div className="relative flex-1 overflow-hidden lg:grid lg:grid-cols-3 min-h-0">
+                    {/* Queue List */}
+                    <div className="lg:col-span-1 lg:border-r border-slate-200 h-full overflow-y-auto p-4 sm:p-6">
+                        {isLoading && !adminReportsQuery && (
+                            <div className="text-center py-8">
+                                <p className="text-slate-600">Loading queue...</p>
+                            </div>
+                        )}
+
+                        {(!isLoading || adminReportsQuery) && pendingReports.length === 0 && (
+                            <div className="text-center py-8">
+                                <p className="text-slate-600">All caught up! No pending reports.</p>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col space-y-2">
+                            {pendingReports.map((report) => (
+                                <button
+                                    key={report.id}
+                                    onClick={() => setSelectedReport(report)}
+                                    className={cn(
+                                        "cursor-pointer w-full text-left p-3 rounded-lg border transition-all",
+                                        selectedReport?.id === report.id
+                                            ? "bg-blue-50 border-blue-300 shadow-sm"
+                                            : "border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                                    )}
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <p className="font-semibold text-sm text-slate-900 truncate flex-1">
+                                            {report.title}
+                                        </p>
+                                        <span className="lg:hidden text-slate-400 text-xs flex items-center shrink-0">
+                                            Details <ChevronRight size={14} className="ml-0.5" />
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 mt-1 truncate">
+                                        {report.barangay || "Unknown location"}
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        {new Date(report.submittedAt as string).toLocaleDateString()}
+                                    </p>
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Queue List */}
-                        <div className="lg:col-span-1 border-r border-slate-200">
-                            {isLoading && !adminReportsQuery && (
-                                <div className="text-center py-8">
-                                    <p className="text-slate-600">Loading queue...</p>
-                                </div>
-                            )}
+                    {/* Report Details: Static on desktop, Slide-in on mobile */}
+                    <div
+                        className={cn(
+                            "h-full overflow-y-auto lg:col-span-2 p-4 sm:p-6 bg-white",
+                            // Mobile slide-in behavior
+                            "max-lg:absolute max-lg:inset-0 max-lg:z-20 transition-transform duration-300 ease-out",
+                            selectedReport
+                                ? "max-lg:translate-x-0"
+                                : "max-lg:translate-x-full max-lg:pointer-events-none"
+                        )}
+                    >
+                        {selectedReport ? (
+                            (() => {
+                                const ProblemIcon = getIcon(selectedReport.problemType.icon);
+                                return (
+                                    <div className="space-y-6">
+                                        {/* Mobile Navigation Header */}
+                                        <div className="lg:hidden flex items-center justify-between pb-3 mb-2 border-b border-slate-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedReport(null)}
+                                                className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                                            >
+                                                <ChevronLeft size={18} />
+                                                Back to Queue
+                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-slate-500 font-mono">
+                                                    #{selectedReport.id.slice(0, 8)}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={onClose}
+                                                    className="text-slate-400 hover:text-slate-600 p-1"
+                                                >
+                                                    <X size={20} />
+                                                </button>
+                                            </div>
+                                        </div>
 
-                            {(!isLoading || adminReportsQuery) && pendingReports.length === 0 && (
-                                <div className="text-center py-8">
-                                    <p className="text-slate-600">All caught up! No pending reports.</p>
-                                </div>
-                            )}
+                                        <div>
+                                            <div className="flex flex-wrap gap-y-2 items-center justify-between mb-2">
+                                                <h3 className="text-xl font-bold text-slate-900">
+                                                    {selectedReport.title}
+                                                </h3>
+                                                <div className="flex items-center gap-2 p-1.5 bg-slate-50 rounded-md border border-slate-200">
+                                                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                                        {selectedReport.category.name}
+                                                    </span>
+                                                    <span className="text-slate-300">|</span>
+                                                    <div className="flex items-center gap-1.5 text-sm text-slate-700">
+                                                        <div
+                                                            className="p-1 rounded-sm text-white"
+                                                            style={{ backgroundColor: selectedReport.category.color }}
+                                                        >
+                                                            <ProblemIcon size={14} />
+                                                        </div>
+                                                        <span className="font-medium">{selectedReport.problemType.name}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className="text-sm text-slate-600 mb-4">
+                                                Submitted {selectedReport.submittedAt ? new Date(selectedReport.submittedAt).toLocaleDateString() : "N/A"} at{" "}
+                                                {selectedReport.submittedAt ? new Date(selectedReport.submittedAt).toLocaleTimeString() : "N/A"}
+                                            </p>
+                                            <p className="text-slate-700 mb-4">{selectedReport.description}</p>
+                                        </div>
 
-                            <div className="flex flex-col space-y-2 max-h-[calc(90vh-200px)] overflow-y-auto">
-                                {pendingReports.map((report) => (
-                                    <button
-                                        key={report.id}
-                                        onClick={() => setSelectedReport(report)}
-                                        className={`cursor-pointer grow mr-4 text-left p-3 rounded-md border transition-colors ${selectedReport?.id === report.id
-                                            ? "bg-blue-50 border-blue-300"
-                                            : "border-slate-200 hover:bg-slate-50"
-                                            }`}
-                                    >
-                                        <p className="font-medium text-sm text-slate-900 truncate">
-                                            {report.title}
-                                        </p>
-                                        <p className="text-xs text-slate-600 mt-1 truncate">
+                                        {/* Media */}
+                                        {(() => {
+                                            const reportImages = selectedReport.media && selectedReport.media.length > 0
+                                                ? selectedReport.media.map(m => m.url)
+                                                : selectedReport.url
+                                                    ? [selectedReport.url]
+                                                    : [];
 
-                                            {report.barangay || "Unknown"}
-                                        </p>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            {new Date(report.submittedAt as string).toLocaleDateString()}
-                                        </p>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                                            if (reportImages.length === 0) return null;
 
-                        {/* Report Details */}
-                        <div className="lg:col-span-2">
-                            {selectedReport ? (
-                                (() => {
-                                    const ProblemIcon = getIcon(selectedReport.problemType.icon);
-                                    return (
-                                        <div className="space-y-6">
-                                            <div>
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <h3 className="text-xl font-bold text-slate-900">
-                                                        {selectedReport.title}
-                                                    </h3>
-                                                    <div className="flex items-center gap-2 p-1.5 bg-slate-50 rounded-md border border-slate-200">
-                                                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                                                            {selectedReport.category.name}
-                                                        </span>
-                                                        <span className="text-slate-300">|</span>
-                                                        <div className="flex items-center gap-1.5 text-sm text-slate-700">
-                                                            <div
-                                                                className="p-1 rounded-sm text-white"
-                                                                style={{ backgroundColor: selectedReport.category.color }}
+                                            return (
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-900 mb-2">
+                                                        Attached Media ({reportImages.length})
+                                                    </p>
+                                                    <div className="flex gap-2 overflow-x-auto pb-2">
+                                                        {reportImages.map((url, idx) => (
+                                                            <button
+                                                                key={idx}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setActiveMediaIndex(idx);
+                                                                    setIsViewerOpen(true);
+                                                                }}
+                                                                className="relative w-24 h-24 rounded-md overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0 cursor-pointer bg-slate-100"
                                                             >
-                                                                <ProblemIcon size={14} />
-                                                            </div>
-                                                            <span className="font-medium">{selectedReport.problemType.name}</span>
-                                                        </div>
+                                                                <Image
+                                                                    src={url}
+                                                                    alt={`Report media ${idx + 1}`}
+                                                                    fill
+                                                                    className="object-cover"
+                                                                />
+                                                            </button>
+                                                        ))}
                                                     </div>
-                                                </div>
-                                                <p className="text-sm text-slate-600 mb-4">
-                                                    Submitted {selectedReport.submittedAt ? new Date(selectedReport.submittedAt).toLocaleDateString() : "N/A"} at{" "}
-                                                    {selectedReport.submittedAt ? new Date(selectedReport.submittedAt).toLocaleTimeString() : "N/A"}
-                                                </p>
-                                                <p className="text-slate-700 mb-4">{selectedReport.description}</p>
-                                            </div>
 
-                                            {/* Media */}
-                                            {(() => {
-                                                const reportImages = selectedReport.media && selectedReport.media.length > 0
-                                                    ? selectedReport.media.map(m => m.url)
-                                                    : selectedReport.url
-                                                        ? [selectedReport.url]
-                                                        : [];
+                                                    {/* Fullscreen Image Viewer Modal */}
+                                                    {isViewerOpen && (
+                                                        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+                                                            {/* Close button */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setIsViewerOpen(false)}
+                                                                className="absolute top-4 right-4 text-white hover:text-slate-300 p-2 z-50 bg-black/50 rounded-full cursor-pointer"
+                                                                title="Close preview"
+                                                            >
+                                                                <X size={24} />
+                                                            </button>
 
-                                                if (reportImages.length === 0) return null;
+                                                            {/* Counter */}
+                                                            <div className="absolute top-4 left-4 text-white bg-black/50 px-3 py-1 rounded-full text-sm z-50">
+                                                                {activeMediaIndex + 1} / {reportImages.length}
+                                                            </div>
 
-                                                return (
-                                                    <div>
-                                                        <p className="text-sm font-medium text-slate-900 mb-2">
-                                                            Attached Media ({reportImages.length})
-                                                        </p>
-                                                        <div className="flex gap-2 overflow-x-auto pb-2">
-                                                            {reportImages.map((url, idx) => (
+                                                            {/* Main Image container */}
+                                                            <div className="relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center">
+                                                                <Image
+                                                                    src={reportImages[activeMediaIndex]}
+                                                                    alt={`Fullscreen preview ${activeMediaIndex + 1}`}
+                                                                    fill
+                                                                    className="object-contain"
+                                                                />
+                                                            </div>
+
+                                                            {/* Previous button */}
+                                                            {reportImages.length > 1 && (
                                                                 <button
-                                                                    key={idx}
                                                                     type="button"
-                                                                    onClick={() => {
-                                                                        setActiveMediaIndex(idx);
-                                                                        setIsViewerOpen(true);
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setActiveMediaIndex((prev) => (prev === 0 ? reportImages.length - 1 : prev - 1));
                                                                     }}
-                                                                    className="relative w-24 h-24 rounded-md overflow-hidden border border-slate-200 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0 cursor-pointer bg-slate-100"
+                                                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 p-3 rounded-full cursor-pointer z-50"
+                                                                    title="Previous image"
                                                                 >
-                                                                    <Image
-                                                                        src={url}
-                                                                        alt={`Report media ${idx + 1}`}
-                                                                        fill
-                                                                        className="object-cover"
-                                                                    />
+                                                                    <ChevronLeft size={24} />
                                                                 </button>
-                                                            ))}
-                                                        </div>
+                                                            )}
 
-                                                        {/* Fullscreen Image Viewer Modal */}
-                                                        {isViewerOpen && (
-                                                            <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-                                                                {/* Close button */}
+                                                            {/* Next button */}
+                                                            {reportImages.length > 1 && (
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => setIsViewerOpen(false)}
-                                                                    className="absolute top-4 right-4 text-white hover:text-slate-300 p-2 z-50 bg-black/50 rounded-full cursor-pointer"
-                                                                    title="Close preview"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setActiveMediaIndex((prev) => (prev === reportImages.length - 1 ? 0 : prev + 1));
+                                                                    }}
+                                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 p-3 rounded-full cursor-pointer z-50"
+                                                                    title="Next image"
                                                                 >
-                                                                    <X size={24} />
+                                                                    <ChevronRight size={24} />
                                                                 </button>
-
-                                                                {/* Counter */}
-                                                                <div className="absolute top-4 left-4 text-white bg-black/50 px-3 py-1 rounded-full text-sm z-50">
-                                                                    {activeMediaIndex + 1} / {reportImages.length}
-                                                                </div>
-
-                                                                {/* Main Image container */}
-                                                                <div className="relative w-full h-full max-w-5xl max-h-[85vh] flex items-center justify-center">
-                                                                    <Image
-                                                                        src={reportImages[activeMediaIndex]}
-                                                                        alt={`Fullscreen preview ${activeMediaIndex + 1}`}
-                                                                        fill
-                                                                        className="object-contain"
-                                                                    />
-                                                                </div>
-
-                                                                {/* Previous button */}
-                                                                {reportImages.length > 1 && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setActiveMediaIndex((prev) => (prev === 0 ? reportImages.length - 1 : prev - 1));
-                                                                        }}
-                                                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 p-3 rounded-full cursor-pointer z-50"
-                                                                        title="Previous image"
-                                                                    >
-                                                                        <ChevronLeft size={24} />
-                                                                    </button>
-                                                                )}
-
-                                                                {/* Next button */}
-                                                                {reportImages.length > 1 && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            setActiveMediaIndex((prev) => (prev === reportImages.length - 1 ? 0 : prev + 1));
-                                                                        }}
-                                                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70 p-3 rounded-full cursor-pointer z-50"
-                                                                        title="Next image"
-                                                                    >
-                                                                        <ChevronRight size={24} />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
-
-
-
-                                            {/* Metadata */}
-                                            <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-md">
-                                                <div>
-                                                    <p className="text-xs font-medium text-slate-600 mb-1">Location</p>
-                                                    <p className="text-sm text-slate-900">
-                                                        {selectedReport.barangay || "Not specified"}
-                                                    </p>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-slate-600 mb-1">Severity</p>
-                                                    <p className="text-sm text-slate-900 capitalize">
-                                                        {selectedReport.severity || "Not specified"}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-slate-600 mb-1">Coordinates</p>
-                                                    <p className="text-sm text-slate-900 font-mono">
-                                                        {selectedReport.latitude.toFixed(4)}, {selectedReport.longitude.toFixed(4)}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-medium text-slate-600 mb-1">Report ID</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-sm text-slate-900 font-mono truncate">
-                                                            {selectedReport.id.slice(0, 8)}...
-                                                        </p>
-                                                        <button className="p-1 hover:bg-slate-200 rounded">
-                                                            <Copy size={14} className="text-slate-600" />
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Metadata */}
+                                        <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-md">
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-600 mb-1">Location</p>
+                                                <p className="text-sm text-slate-900">
+                                                    {selectedReport.barangay || "Not specified"}
+                                                </p>
                                             </div>
-
-                                            {/* Actions */}
-                                            <div className="space-y-3 pt-4 border-t border-slate-200">
-                                                <button
-                                                    onClick={() => handleVerify(selectedReport.id)}
-                                                    disabled={actionLoading === selectedReport.id}
-                                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 disabled:opacity-50"
-                                                >
-                                                    <CheckCircle size={18} />
-                                                    Verify Report
-                                                </button>
-
-                                                <button
-                                                    onClick={() => handleDuplicate(selectedReport.id)}
-                                                    disabled={actionLoading === selectedReport.id}
-                                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-600 text-white rounded-md font-medium hover:bg-yellow-700 disabled:opacity-50"
-                                                >
-                                                    <Copy size={18} />
-                                                    Mark as Duplicate
-                                                </button>
-
-                                                <div className="space-y-2">
-                                                    <textarea
-                                                        value={rejectReason}
-                                                        onChange={(e) => setRejectReason(e.target.value)}
-                                                        placeholder="Enter reason for rejection..."
-                                                        rows={3}
-                                                        className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                                                    />
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-600 mb-1">Severity</p>
+                                                <p className="text-sm text-slate-900 capitalize">
+                                                    {selectedReport.severity || "Not specified"}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-600 mb-1">Coordinates</p>
+                                                <p className="text-sm text-slate-900 font-mono">
+                                                    {selectedReport.latitude.toFixed(4)}, {selectedReport.longitude.toFixed(4)}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-600 mb-1">Report ID</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm text-slate-900 font-mono truncate">
+                                                        {selectedReport.id.slice(0, 8)}...
+                                                    </p>
                                                     <button
-                                                        onClick={() => handleReject(selectedReport.id)}
-                                                        disabled={actionLoading === selectedReport.id}
-                                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 disabled:opacity-50"
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(selectedReport.id);
+                                                            toast.success("Copied report ID");
+                                                        }}
+                                                        className="p-1 hover:bg-slate-200 rounded cursor-pointer"
+                                                        title="Copy ID"
                                                     >
-                                                        <XCircle size={18} />
-                                                        Reject Report
+                                                        <Copy size={14} className="text-slate-600" />
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    );
-                                })()
-                            ) : (
-                                <div className="flex items-center justify-center h-full min-h-[400px] text-slate-600">
-                                    Select a report from the queue to review
-                                </div>
-                            )}
-                        </div>
+
+                                        {/* Actions */}
+                                        <div className="space-y-3 pt-4 border-t border-slate-200">
+                                            <button
+                                                onClick={() => handleVerify(selectedReport.id)}
+                                                disabled={actionLoading === selectedReport.id}
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 disabled:opacity-50 cursor-pointer transition-colors"
+                                            >
+                                                <CheckCircle size={18} />
+                                                Verify Report
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleDuplicate(selectedReport.id)}
+                                                disabled={actionLoading === selectedReport.id}
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-600 text-white rounded-md font-medium hover:bg-yellow-700 disabled:opacity-50 cursor-pointer transition-colors"
+                                            >
+                                                <Copy size={18} />
+                                                Mark as Duplicate
+                                            </button>
+
+                                            <div className="space-y-2">
+                                                <textarea
+                                                    value={rejectReason}
+                                                    onChange={(e) => setRejectReason(e.target.value)}
+                                                    placeholder="Enter reason for rejection..."
+                                                    rows={3}
+                                                    className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                                                />
+                                                <button
+                                                    onClick={() => handleReject(selectedReport.id)}
+                                                    disabled={actionLoading === selectedReport.id}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 disabled:opacity-50 cursor-pointer transition-colors"
+                                                >
+                                                    <XCircle size={18} />
+                                                    Reject Report
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()
+                        ) : (
+                            <div className="hidden lg:flex items-center justify-center h-full min-h-[400px] text-slate-400 text-sm">
+                                Select a report from the queue to review
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
