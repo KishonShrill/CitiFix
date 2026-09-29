@@ -40,7 +40,7 @@ export function ReportSlideOut({
         const panel = panelRef.current;
         const height = window.innerHeight;
 
-        const peekY = -120;
+        const peekY = -100;
         const midY = -height * 0.45;
         const fullY = -height + 61;
 
@@ -130,7 +130,7 @@ export function ReportSlideOut({
                     // Mobile bottom sheet styles
                     "top-full w-full max-md:h-dvh rounded-t-2xl",
                     // Desktop styles
-                    "md:top-20 md:h-fit md:w-96 md:max-h-[80dvh] md:rounded-2xl",
+                    "md:top-16 md:h-fit md:w-96 md:max-h-[80dvh] md:rounded-2xl",
                     isOpen
                         ? "md:translate-x-0 md:right-4"
                         : "md:translate-x-full right-0"
@@ -229,7 +229,7 @@ export function ReportSlideOut({
                             {/* Header */}
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-center gap-2">
                                         <h2 className="text-2xl font-bold text-slate-900">{report?.title}</h2>
                                         {isFetching && (
                                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 animate-pulse">
@@ -240,7 +240,8 @@ export function ReportSlideOut({
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="hidden max-md:block z-40 text-slate-400 hover:text-slate-600 p-1"
+                                    className={cn("md:hidden z-40 text-slate-400 hover:text-slate-600 p-1",
+                                        !report.url && "block!")}
                                 >
                                     <X size={20} />
                                 </button>

@@ -131,7 +131,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                     {!isPickingLocation && (
                         <button
                             onClick={handleOpenReportModal}
-                            className="cursor-pointer max-md:hidden flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+                            className="cursor-pointer shadow-lg max-md:hidden flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
                         >
                             <Plus size={16} />
                             Report Issue
