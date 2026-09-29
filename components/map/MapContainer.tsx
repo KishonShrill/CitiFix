@@ -65,6 +65,7 @@ interface ReportMarkerProps {
 }
 
 function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
+    const [isHovered, setIsHovered] = useState(false);
     const Icon = getIcon(report.problemType.icon);
 
     // Unverified reports use a muted slate tone to signal "pending"
@@ -85,9 +86,61 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
                 onSelect(report.id);
             }}
         >
-            <div className="flex flex-col items-center cursor-pointer">
+            <div
+                className="relative flex flex-col items-center cursor-pointer group"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                {/* Hover Preview Tooltip Card - Positioned strictly ABOVE the pin */}
+                {isHovered && (
+                    <div
+                        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center animate-in fade-in zoom-in-95 duration-150"
+                        style={{ width: "200px" }}
+                    >
+                        <div className="w-full bg-white rounded-xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col">
+                            {/* Preview Image */}
+                            {report.url ? (
+                                <div className="relative w-full h-28 bg-slate-100 overflow-hidden">
+                                    <img
+                                        src={report.url}
+                                        alt={report.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                            ) : (
+                                <div
+                                    className="w-full h-16 flex items-center justify-center"
+                                    style={{ backgroundColor: `${bgColor}20` }}
+                                >
+                                    <Icon size={24} style={{ color: bgColor }} />
+                                </div>
+                            )}
+
+                            {/* Content & Title */}
+                            <div className="p-2.5 bg-white">
+                                <p className="font-semibold text-xs text-slate-900 line-clamp-2 leading-snug">
+                                    {report.title}
+                                </p>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    <span
+                                        className="w-2 h-2 rounded-full shrink-0"
+                                        style={{ backgroundColor: report.category?.color || bgColor }}
+                                    />
+                                    <span className="text-[10px] text-slate-500 font-medium truncate">
+                                        {report.category?.name || report.problemType?.name}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Caret pointing to the pin */}
+                        <div className="w-2.5 h-2.5 bg-white rotate-45 -mt-1.5 border-r border-b border-slate-200/80 shadow-sm" />
+                    </div>
+                )}
+
+                {/* The Pin Circle */}
                 <div
-                    className="rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+                    className="rounded-full shadow-lg flex items-center justify-center transition-transform group-hover:scale-110"
                     style={{
                         width: baseSize,
                         height: baseSize,
@@ -99,6 +152,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
                 >
                     <Icon size={iconSize} color="white" strokeWidth={2.5} />
                 </div>
+
                 {/* Stem below the circle */}
                 <div
                     className="rounded-full"
