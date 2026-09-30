@@ -60,3 +60,73 @@ export async function deleteCloudinaryImage(publicId: string): Promise<Cloudinar
         throw error;
     }
 }
+
+export interface UploadedImage {
+    url: string;
+    cloudinaryPublicId: string;
+}
+
+/**
+ * Signs and uploads a file/blob to Cloudinary.
+ * Returns the secure URL and Cloudinary public ID.
+ */
+export async function uploadImageToCloudinary(
+    file: File | Blob,
+    publicId: string,
+    index: number
+): Promise<UploadedImage> {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const folder = "citifix";
+    const customPublicId = `${publicId}/${index}`;
+
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const apiKey = process.env.CLOUDINARY_API_KEY || process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+
+    if (!apiSecret || !apiKey || !cloudName) {
+        throw new Error("Missing Cloudinary configuration environment variables");
+    }
+
+    let signature: string;
+    try {
+        signature = getCloudinary().utils.api_sign_request(
+            {
+                timestamp,
+                folder,
+                public_id: customPublicId,
+            },
+            apiSecret
+        );
+    } catch (error) {
+        console.error("Cloudinary signing error:", error);
+        throw new Error("Failed to generate Cloudinary upload signature");
+    }
+
+    const cloudinaryFormData = new FormData();
+    cloudinaryFormData.append("file", file);
+    cloudinaryFormData.append("api_key", apiKey);
+    cloudinaryFormData.append("timestamp", timestamp.toString());
+    cloudinaryFormData.append("signature", signature);
+    cloudinaryFormData.append("folder", folder);
+    cloudinaryFormData.append("public_id", customPublicId);
+
+    const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+            method: "POST",
+            body: cloudinaryFormData,
+        }
+    );
+
+    if (!uploadRes.ok) {
+        const errorText = await uploadRes.text().catch(() => "");
+        console.error("Cloudinary upload failed:", errorText);
+        throw new Error(`Failed to upload image to Cloudinary: ${uploadRes.statusText}`);
+    }
+
+    const uploadData = (await uploadRes.json()) as { public_id: string; secure_url: string };
+    return {
+        url: uploadData.secure_url,
+        cloudinaryPublicId: uploadData.public_id,
+    };
+}
