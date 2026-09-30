@@ -184,20 +184,45 @@ export interface CreateReportInput {
     problemTypeId: string;
     severity?: "low" | "medium" | "high";
     barangay?: string;
+    files?: File[];
 }
 
 export async function createReport(data: CreateReportInput): Promise<Report> {
-    const res = await fetch(`${API_BASE}/reports`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-    });
-    if (!res.ok) {
-        const err = (await res.json()) as ErrorResponse;
-        throw new Error(err.error.message || "Failed to create report");
+    let res: Response;
+
+    if (data.files && data.files.length > 0) {
+        const formData = new FormData();
+        formData.append("title", data.title);
+        formData.append("description", data.description);
+        formData.append("latitude", data.latitude.toString());
+        formData.append("longitude", data.longitude.toString());
+        formData.append("categoryId", data.categoryId);
+        formData.append("problemTypeId", data.problemTypeId);
+        if (data.severity) formData.append("severity", data.severity);
+        if (data.barangay) formData.append("barangay", data.barangay);
+
+        for (const file of data.files) {
+            formData.append("files", file);
+        }
+
+        res = await fetch(`${API_BASE}/reports`, {
+            method: "POST",
+            body: formData,
+        });
+    } else {
+        res = await fetch(`${API_BASE}/reports`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
     }
-    const json = (await res.json()) as Report;
-    return json;
+
+    if (!res.ok) {
+        const err = (await res.json().catch(() => ({ error: { message: "Failed to create report" } }))) as ErrorResponse;
+        throw new Error(err.error?.message || "Failed to create report");
+    }
+    const json = (await res.json()) as SuccessResponse<Report> | Report;
+    return "data" in json ? json.data : json;
 }
 
 export async function updateReport(publicId: string, data: Partial<CreateReportInput>): Promise<Report> {

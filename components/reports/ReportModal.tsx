@@ -183,8 +183,8 @@ export function ReportModal({
                 return;
             }
 
-            setUploadProgressText("Creating report...");
-            const report = await createReport.mutateAsync({
+            setUploadProgressText("Uploading images & creating report...");
+            await createReport.mutateAsync({
                 title: formData.title.trim(),
                 description: formData.description.trim(),
                 categoryId: selectedCategory,
@@ -192,14 +192,8 @@ export function ReportModal({
                 severity: formData.severity,
                 latitude: location.lat,
                 longitude: location.lng,
+                files: selectedFiles,
             });
-
-            // Upload photos sequentially
-            for (let i = 0; i < selectedFiles.length; i++) {
-                setUploadProgressText(`Uploading photo ${i + 1} of ${selectedFiles.length}...`);
-                const file = selectedFiles[i];
-                await api.uploadReportMedia(report.id, file);
-            }
 
             toast.success("Report submitted successfully with photos");
             setUploading(false);
