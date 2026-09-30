@@ -36,7 +36,7 @@ export const validInputPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     return files;
 }
 
-export const validDraggedPhotos = (e: React.DragEvent<HTMLInputElement>) => {
+export const validDraggedPhotos = (e: React.DragEvent<HTMLElement>) => {
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
     const ALLOWED_FILETYPES = ['image/png', 'image/webp', 'image/jpeg'];
     const files = e.dataTransfer.files

@@ -317,6 +317,14 @@ export async function duplicateReportAdmin(id: string, duplicateOfId?: string): 
     return json.data;
 }
 
+export async function deleteReportAdmin(id: string): Promise<void> {
+    const res = await fetch(`${API_BASE}/admin/reports/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+        const err = (await res.json().catch(() => ({ error: { message: "Failed to delete report" } }))) as ErrorResponse;
+        throw new Error(err.error?.message || "Failed to delete report");
+    }
+}
+
 export async function getAdminReports(params?: { status?: string, limit?: number, offset?: number }): Promise<PaginatedResponse<Report>> {
     const query = new URLSearchParams();
     if (params?.status) query.append("status", params.status);

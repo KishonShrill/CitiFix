@@ -23,7 +23,7 @@ export async function POST(
         return sendError(404, "NOT_FOUND", "Report not found");
     }
 
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as { duplicateOfId?: string };
     const duplicateOfId = body?.duplicateOfId;
 
     // Optionally validate that the original report exists

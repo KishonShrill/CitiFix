@@ -97,7 +97,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
                 {/* Hover Preview Tooltip Card - Positioned strictly ABOVE the pin */}
                 {isHovered && (
                     <div
-                        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center animate-in fade-in zoom-in-95 duration-150"
+                        className="max-sm:hidden absolute bottom-full mb-2 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center animate-in fade-in zoom-in-95 duration-150"
                         style={{ width: "250px" }}
                     >
                         <div className="w-full bg-white rounded-xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col">
@@ -121,7 +121,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
 
                             {/* Content & Title */}
                             <div className="p-2.5 bg-white">
-                                <p className="font-semibold text-sm text-slate-900 line-clamp-2 leading-snug">
+                                <p className="font-semibold text-lg text-slate-900 line-clamp-2 leading-snug">
                                     {report.title}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-1">
@@ -129,7 +129,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
                                         className="w-2 h-2 rounded-full shrink-0"
                                         style={{ backgroundColor: report.category?.color || bgColor }}
                                     />
-                                    <span className="text-xs text-slate-500 font-medium truncate">
+                                    <span className="text-[14px] text-slate-500 font-medium truncate">
                                         {report.category?.name || report.problemType?.name}
                                     </span>
                                 </div>

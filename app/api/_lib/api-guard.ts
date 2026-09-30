@@ -46,7 +46,7 @@ export async function requireRole(
 ) {
     const user = await requireUser(request);
 
-    if (!roles.includes(user.role)) {
+    if (!user.role || !roles.includes(user.role as "user" | "moderator" | "admin")) {
         throw new Response(
             JSON.stringify({
                 error: {
