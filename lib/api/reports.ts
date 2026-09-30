@@ -231,12 +231,12 @@ export async function uploadReportMedia(publicId: string, file: File): Promise<R
         method: "POST",
         body: formData,
     });
-    
+
     if (!res.ok) {
         const err = await res.json().catch(() => ({ error: { message: "Failed to upload media" } })) as any;
         throw new Error(err.error?.message || "Failed to upload media");
     }
-    
+
     const json = (await res.json()) as SuccessResponse<ReportMedia>;
     return json.data;
 }
@@ -260,8 +260,8 @@ export async function verifyReportAdmin(id: string): Promise<Report> {
         const err = (await res.json()) as ErrorResponse;
         throw new Error(err.error.message || "Failed to verify report");
     }
-    const json = (await res.json()) as SuccessResponse<Report>;
-    return json.data;
+    const json = (await res.json()) as Report;
+    return json;
 }
 
 export async function rejectReportAdmin(id: string, reason: string): Promise<Report> {

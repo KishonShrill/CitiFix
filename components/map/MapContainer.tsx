@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect, SetStateAction, Dispatch } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import MapGL, {
     Source,
     Layer,
@@ -40,6 +40,8 @@ interface MapContainerProps {
     onPinLocationChange?: (lat: number, lng: number) => void;
     /** Panning functionality for the map */
     flyToLocation?: { lat: number; lng: number };
+    /** Fires whenever the center of the map changes */
+    onCenterChange?: (center: { lat: number; lng: number }) => void;
 }
 
 /*
@@ -178,6 +180,7 @@ export const MapContainer = React.memo(function MapContainer({
     pinLocation,
     onPinLocationChange,
     flyToLocation,
+    onCenterChange,
 }: MapContainerProps) {
     const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
     const [iliganBoundaryData, setIliganBoundaryData] = useState<any>(null);
@@ -214,13 +217,24 @@ export const MapContainer = React.memo(function MapContainer({
             minLng: bounds.getWest(),
             maxLng: bounds.getEast(),
         });
-    }, [onBoundsChange]);
+        const mapCenter = mapRef.current.getCenter();
+        onCenterChange?.({
+            lat: mapCenter.lat,
+            lng: mapCenter.lng,
+        });
+    }, [onBoundsChange, onCenterChange]);
 
     /*
      * Called whenever the map moves.
      */
     const handleMove = useCallback((evt: ViewStateChangeEvent) => {
         if (onMove) onMove(evt);
+        if (onCenterChange && evt.viewState) {
+            onCenterChange({
+                lat: evt.viewState.latitude,
+                lng: evt.viewState.longitude,
+            });
+        }
         if (!mapRef.current) return;
 
         const bounds = mapRef.current.getBounds();
@@ -230,7 +244,7 @@ export const MapContainer = React.memo(function MapContainer({
             minLng: bounds.getWest(),
             maxLng: bounds.getEast(),
         });
-    }, [onBoundsChange, onMove]);
+    }, [onBoundsChange, onCenterChange, onMove]);
 
     /*
      * In picking mode, clicking the map moves the pin.
