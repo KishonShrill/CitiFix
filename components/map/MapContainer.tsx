@@ -82,6 +82,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
             longitude={report.longitude}
             latitude={report.latitude}
             anchor="bottom"
+            style={{ zIndex: isHovered ? 99999 : isSelected ? 1000 : 1 }}
             onClick={(e) => {
                 // Prevent the map's onClick from also firing
                 e.originalEvent.stopPropagation();
@@ -97,12 +98,12 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
                 {isHovered && (
                     <div
                         className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 pointer-events-none z-50 flex flex-col items-center animate-in fade-in zoom-in-95 duration-150"
-                        style={{ width: "200px" }}
+                        style={{ width: "250px" }}
                     >
                         <div className="w-full bg-white rounded-xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col">
                             {/* Preview Image */}
                             {report.url ? (
-                                <div className="relative w-full h-28 bg-slate-100 overflow-hidden">
+                                <div className="relative w-full h-32 bg-slate-100 overflow-hidden">
                                     <img
                                         src={report.url}
                                         alt={report.title}
@@ -120,7 +121,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
 
                             {/* Content & Title */}
                             <div className="p-2.5 bg-white">
-                                <p className="font-semibold text-xs text-slate-900 line-clamp-2 leading-snug">
+                                <p className="font-semibold text-sm text-slate-900 line-clamp-2 leading-snug">
                                     {report.title}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-1">
@@ -128,7 +129,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
                                         className="w-2 h-2 rounded-full shrink-0"
                                         style={{ backgroundColor: report.category?.color || bgColor }}
                                     />
-                                    <span className="text-[10px] text-slate-500 font-medium truncate">
+                                    <span className="text-xs text-slate-500 font-medium truncate">
                                         {report.category?.name || report.problemType?.name}
                                     </span>
                                 </div>
