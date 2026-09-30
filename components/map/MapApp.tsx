@@ -33,9 +33,10 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
     const { userLocation } = useUserLocation();
 
     // Deep link initialization state
-    const [initialReportId, setInitialReportId] = useState<string | null>(initialReportIdFromUrl || null);
+    const initialReportId = initialReportIdFromUrl || null;
     const [hasDoneInitialPan, setHasDoneInitialPan] = useState(false);
     const [panLocation, setPanLocation] = useState<{ lat: number, lng: number } | undefined>();
+    const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
     // If an initial report is set via props, initialize selectedReportId
     useEffect(() => {
@@ -80,7 +81,8 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
         }
 
         setIsPickingLocation(true);
-        setPickedLocation({ lat: userLocation[1], lng: userLocation[0] });
+        const centerToPick = currentMapCenter || { lat: userLocation[1], lng: userLocation[0] };
+        setPickedLocation(centerToPick);
     };
 
     if (isCheckingAuth) {
@@ -103,6 +105,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                 flyToLocation={panLocation}
                 pinLocation={isPickingLocation ? (pickedLocation || undefined) : undefined}
                 onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
+                onCenterChange={setCurrentMapCenter}
             />
 
             {/* Top Bar */}
