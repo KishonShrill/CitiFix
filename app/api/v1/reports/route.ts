@@ -12,10 +12,10 @@ export async function GET(request: Request) {
     const { limit, offset } = parsePagination(url, 50, 1000);
 
     // Parse filters
-    const status = url.searchParams.get("status") ?? undefined;
+    const status = (url.searchParams.get("status") as any) ?? undefined;
     const categoryId = url.searchParams.get("category") ?? undefined;
     const problemTypeId = url.searchParams.get("problemType") ?? undefined;
-    const severity = url.searchParams.get("severity") ?? undefined;
+    const severity = (url.searchParams.get("severity") as any) ?? undefined;
     const barangay = url.searchParams.get("barangay") ?? undefined;
 
     // Build where conditions - only show published/verified reports

@@ -368,6 +368,62 @@ export function useDuplicateReport() {
     });
 }
 
+export function useDeleteReportAdmin() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.deleteReportAdmin(id),
+        onSuccess: (_, id) => {
+            queryClient.removeQueries({ queryKey: ["report", id] });
+            queryClient.removeQueries({ queryKey: ["userReport", id] });
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["reports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["adminReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+
+            queryClient.setQueriesData<api.PaginatedResponse<api.Report>>(
+                { queryKey: ["userReports"] },
+                (oldData) => {
+                    if (!oldData) return oldData;
+                    return {
+                        ...oldData,
+                        data: oldData.data.filter((r) => r.id !== id),
+                        meta: {
+                            ...oldData.meta,
+                            total: Math.max(0, oldData.meta.total - 1),
+                        },
+                    };
+                }
+            );
+        },
+    });
+}
+
 export function useAdminReports(params?: { status?: string, limit?: number, offset?: number }) {
     return useQuery({
         queryKey: ["adminReports", params],

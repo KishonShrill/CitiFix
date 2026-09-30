@@ -10,10 +10,11 @@ import { AdminQueue } from "@/components/admin/AdminQueue";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LegendModal } from "@/components/common/LegendModal";
-import { useReports, useReport } from "@/hooks/useReports";
+import { useReports, useReport, useDeleteReportAdmin } from "@/hooks/useReports";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Plus, HelpCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: string }) {
     const { data: session, isPending: isCheckingAuth } = authClient.useSession();
@@ -73,6 +74,24 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
     }, [selectedReportId]);
 
     const { data: reportsData, isFetching: reportsFetching } = useReports({ limit: 500 });
+    const deleteReportAdminMutation = useDeleteReportAdmin();
+    const isStaff = !!user && ((user as any).role === "admin" || (user as any).role === "moderator");
+
+    const handleDeleteReport = async () => {
+        if (!selectedReportId) return;
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this report? This will permanently delete the report and all associated images."
+        );
+        if (!confirmed) return;
+
+        try {
+            await deleteReportAdminMutation.mutateAsync(selectedReportId);
+            setSelectedReportId(null);
+            toast.success("Report deleted successfully");
+        } catch (error: any) {
+            toast.error(error?.message || "Failed to delete report");
+        }
+    };
 
     const handleOpenReportModal = () => {
         if (!user) {
@@ -231,6 +250,8 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
             <ReportSlideOut
                 isOpen={!!selectedReportId}
                 onClose={() => setSelectedReportId(null)}
+                onDelete={isStaff ? handleDeleteReport : undefined}
+                isDeleting={deleteReportAdminMutation.isPending}
             />
 
             {user && (

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const { limit, offset } = parsePagination(url, 30, 100);
 
     // Parse filters for moderation queue
-    const status = url.searchParams.get("status") ?? "submitted"; // Default to submitted
+    const status = (url.searchParams.get("status") ?? "submitted") as "submitted" | "under_review" | "verified" | "rejected" | "duplicate";
 
     const [totalResult] = await db
         .select({ count: sql<number>`count(*)` })

@@ -14,6 +14,7 @@ interface ReportSlideOutProps {
     onClose: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
+    isDeleting?: boolean;
 }
 
 export function ReportSlideOut({
@@ -21,6 +22,7 @@ export function ReportSlideOut({
     onClose,
     onEdit,
     onDelete,
+    isDeleting,
 }: ReportSlideOutProps) {
     const panelRef = useRef<HTMLDivElement>(null);
     const grabRef = useRef<HTMLDivElement>(null);
@@ -330,7 +332,8 @@ export function ReportSlideOut({
                                     {onEdit && (
                                         <button
                                             onClick={onEdit}
-                                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 text-sm"
+                                            disabled={isDeleting}
+                                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 text-sm cursor-pointer transition-colors"
                                         >
                                             Edit
                                         </button>
@@ -338,9 +341,10 @@ export function ReportSlideOut({
                                     {onDelete && (
                                         <button
                                             onClick={onDelete}
-                                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 text-sm"
+                                            disabled={isDeleting}
+                                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 disabled:opacity-50 text-sm cursor-pointer transition-colors"
                                         >
-                                            Delete
+                                            {isDeleting ? "Deleting..." : "Delete"}
                                         </button>
                                     )}
                                 </div>
