@@ -82,7 +82,7 @@ function ReportMarker({ report, isSelected, onSelect }: ReportMarkerProps) {
             longitude={report.longitude}
             latitude={report.latitude}
             anchor="bottom"
-            style={{ zIndex: isHovered ? 99999 : isSelected ? 1000 : 1 }}
+            style={{ zIndex: isHovered ? 50 : isSelected ? 40 : 1 }}
             onClick={(e) => {
                 // Prevent the map's onClick from also firing
                 e.originalEvent.stopPropagation();
@@ -275,8 +275,6 @@ export const MapContainer = React.memo(function MapContainer({
                 }}
                 //mapStyle="https://tiles.openfreemap.org/styles/bright"
                 mapStyle="https://tiles.openfreemap.org/styles/liberty"
-                //mapStyle="https://demotiles.maplibre.org/globe.json"
-                maxTileCacheSize={5}
                 terrain={{
                     source: "terrain-source",
                     exaggeration: isTerrainEnabled ? 1 : 0,
