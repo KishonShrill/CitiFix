@@ -11,7 +11,7 @@ const TopNav = ({ href, text }: { href: string, text: string }) => {
                 <div className="flex items-center gap-3">
                     <Link href="/" className="flex items-center gap-2 group">
                         <Image
-                            src="/images/logos/betteriligan-logo.png"
+                            src="/images/logos/betteriligan-logo.svg"
                             alt="BetterIligan Logo"
                             width={36}
                             height={36}

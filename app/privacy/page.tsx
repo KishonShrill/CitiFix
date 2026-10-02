@@ -51,8 +51,8 @@ export default function PrivacyPolicyPage() {
                         </div>
                         <div>
                             <span className="text-slate-500 block">Privacy Contact:</span>
-                            <a href="mailto:chriscent@betteriligancity.org" className="font-semibold text-orange-600 hover:underline">
-                                chriscent@betteriligancity.org
+                            <a href="mailto:support@betteriligancity.org" className="font-semibold text-orange-600 hover:underline">
+                                support@betteriligancity.org
                             </a>
                         </div>
                     </div>
@@ -443,7 +443,7 @@ export default function PrivacyPolicyPage() {
                                 </p>
                                 <div className="text-sm space-y-1 font-medium text-slate-800">
                                     <p><strong>Organization:</strong> BetterIliganCity (under BetterGov)</p>
-                                    <p><strong>Email:</strong> <a href="mailto:chriscent@betteriligancity.org" className="text-orange-600 hover:underline">chriscent@betteriligancity.org</a></p>
+                                    <p><strong>Email:</strong> <a href="mailto:support@betteriligancity.org" className="text-orange-600 hover:underline">support@betteriligancity.org</a></p>
                                     <p><strong>Jurisdiction:</strong> Iligan City, Lanao del Norte, Republic of the Philippines</p>
                                 </div>
                             </div>

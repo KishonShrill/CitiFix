@@ -51,8 +51,8 @@ export default function TermsPage() {
                         </div>
                         <div>
                             <span className="text-slate-500 block">Contact:</span>
-                            <a href="mailto:chriscent@betteriligancity.org" className="font-semibold text-orange-600 hover:underline">
-                                chriscent@betteriligancity.org
+                            <a href="mailto:support@betteriligancity.org" className="font-semibold text-orange-600 hover:text-blue-500! hover:underline">
+                                support@betteriligancity.org
                             </a>
                         </div>
                     </div>
@@ -326,7 +326,7 @@ export default function TermsPage() {
                             <p>For questions, terms feedback, or legal inquiries, please contact our team:</p>
                             <div className="p-4 bg-orange-50 rounded-xl border border-orange-200 text-sm space-y-1 font-medium text-slate-800">
                                 <p><strong>Initiative:</strong> BetterIliganCity (under BetterGov)</p>
-                                <p><strong>Email:</strong> <a href="mailto:chriscent@betteriligancity.org" className="text-orange-600 hover:underline">chriscent@betteriligancity.org</a></p>
+                                <p><strong>Email:</strong> <a href="mailto:support@betteriligancity.org" className="text-orange-600 hover:underline hover:text-blue-500!">support@betteriligancity.org</a></p>
                                 <p><strong>Location:</strong> Iligan City, Philippines</p>
                             </div>
                         </div>
