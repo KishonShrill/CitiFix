@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { LogOut, Menu as MenuIcon, X, Shield, FileText } from "lucide-react";
+import { LogOut, Shield, FileText } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 interface User {
@@ -37,16 +37,16 @@ export function UserMenu({ user, onMyReportsClick, onAdminClick }: UserMenuProps
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="cursor-pointer flex items-center gap-2 px-3 py-1 bg-white text-slate-700 hover:bg-slate-100 rounded-lg shadow-lg"
+                className="cursor-pointer text-sm flex items-center gap-2 px-3 py-1 bg-white text-slate-700 hover:bg-slate-100 rounded-lg shadow-lg"
             >
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                     {user.name?.charAt(0).toUpperCase() || "U"}
                 </div>
-                {isOpen ? <X size={18} /> : <MenuIcon size={18} />}
+                {user.name}
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg">
                     <div className="px-4 py-3 border-b border-slate-200">
                         <p className="font-medium text-slate-900">{user.name}</p>
                         <p className="text-sm text-slate-600">{user.email}</p>

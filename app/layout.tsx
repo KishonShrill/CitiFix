@@ -36,7 +36,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <Providers>
                     {children}
                 </Providers>
-                <Toaster position="bottom-right" richColors />
+                <Toaster className="max-md:hidden" position="bottom-right" richColors />
+                <Toaster className="md:hidden" position="top-center" richColors />
             </body>
         </html>
     );

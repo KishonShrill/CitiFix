@@ -106,7 +106,15 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
 
     if (isCheckingAuth) {
         return (
-            <div className="w-full h-screen flex items-center justify-center bg-slate-50">
+            <div className="w-full h-screen flex flex-col gap-2 items-center justify-center bg-slate-50">
+                <Image
+                    src="/images/logos/betteriligan-logo.svg"
+                    alt="BetterIligan Logo"
+                    width={150}
+                    height={150}
+                    loading="eager"
+                    className="h-20 w-20 rounded-lg object-cover"
+                />
                 <p className="text-slate-600">Loading...</p>
             </div>
         );
@@ -128,20 +136,28 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
             />
 
             {/* Top Bar */}
-            <div className="absolute top-0 left-0 right-0 z-30 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg shadow-lg">
+            <div className="md:bg-white absolute top-0 left-0 right-0 z-30 px-4 py-3 md:py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2 bg-white max-md:px-2 max-md:py-1 rounded-lg max-md:shadow-lg">
                     <Image
                         src="/images/logos/betteriligan-logo.svg"
                         alt="BetterIligan Logo"
                         width={75}
                         height={75}
                         loading="eager"
-                        className="h-8 w-8 rounded-lg object-cover"
+                        className="h-10 w-10 max-md:hidden rounded-lg object-cover"
                     />
-                    <h1 className="font-bold text-slate-900">CitiFix</h1>
+                    <Image
+                        src="/images/logos/betteriligan-logo.svg"
+                        alt="BetterIligan Logo"
+                        width={75}
+                        height={75}
+                        loading="eager"
+                        className="h-8 w-8 md:hidden rounded-lg object-cover"
+                    />
+                    <h1 className="font-bold text-slate-900 md:text-xl">CitiFix</h1>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 z-70">
                     {!isPickingLocation && (
                         <button
                             onClick={handleOpenReportModal}
