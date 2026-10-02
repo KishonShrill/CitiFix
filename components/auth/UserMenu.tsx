@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { LogOut, Menu as MenuIcon, X } from "lucide-react";
+import Link from "next/link";
+import { LogOut, Menu as MenuIcon, X, Shield, FileText } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 interface User {
@@ -72,6 +73,25 @@ export function UserMenu({ user, onMyReportsClick, onAdminClick }: UserMenuProps
                             Moderation Queue
                         </button>
                     )}
+
+                    <div className="border-t border-slate-200 py-1">
+                        <Link
+                            href="/privacy"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-2 px-4 py-1.5 text-slate-600 hover:bg-slate-50 text-xs"
+                        >
+                            <Shield size={14} className="text-slate-400" />
+                            Privacy Policy
+                        </Link>
+                        <Link
+                            href="/terms"
+                            onClick={() => setIsOpen(false)}
+                            className="flex items-center gap-2 px-4 py-1.5 text-slate-600 hover:bg-slate-50 text-xs"
+                        >
+                            <FileText size={14} className="text-slate-400" />
+                            Terms & Conditions
+                        </Link>
+                    </div>
 
                     <button
                         onClick={handleSignOut}

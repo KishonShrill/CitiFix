@@ -698,6 +698,12 @@ export function ReportModal({
                                         ))}
                                     </div>
                                 </div>
+
+                                <div className="h-px bg-slate-200" />
+
+                                <p className="text-[11px] text-slate-500 leading-normal">
+                                    By submitting, you agree that your report summary, exact coordinates, and attached photos will be publicly displayed on the map upon verification in accordance with our Terms & Conditions and Privacy Policy.
+                                </p>
                             </div>
 
                             {uploading && (
