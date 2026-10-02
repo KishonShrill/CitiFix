@@ -1,4 +1,5 @@
-import { X } from "lucide-react";
+import Link from "next/link";
+import { X, Shield, FileText } from "lucide-react";
 import { useCategories, useProblemTypes } from "@/hooks/useReports";
 import { getIcon } from "@/lib/icons";
 
@@ -59,6 +60,29 @@ export function LegendModal({ isOpen, onClose }: LegendModalProps) {
                                 </div>
                             );
                         })}
+                    </div>
+
+                    {/* Legal & Governance Links */}
+                    <div className="mt-8 pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                        <p>BetterIliganCity · BetterGov Civic Organization</p>
+                        <div className="flex items-center gap-4">
+                            <Link
+                                href="/privacy"
+                                onClick={onClose}
+                                className="flex items-center gap-1 text-slate-600 hover:text-orange-600 font-medium transition-colors"
+                            >
+                                <Shield size={13} />
+                                Privacy Policy
+                            </Link>
+                            <Link
+                                href="/terms"
+                                onClick={onClose}
+                                className="flex items-center gap-1 text-slate-600 hover:text-orange-600 font-medium transition-colors"
+                            >
+                                <FileText size={13} />
+                                Terms & Conditions
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>

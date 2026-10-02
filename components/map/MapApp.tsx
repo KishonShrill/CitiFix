@@ -131,7 +131,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
             <div className="absolute top-0 left-0 right-0 z-30 px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg shadow-lg">
                     <Image
-                        src="/images/logos/betteriligan-logo.png"
+                        src="/images/logos/betteriligan-logo.svg"
                         alt="BetterIligan Logo"
                         width={75}
                         height={75}

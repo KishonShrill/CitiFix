@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
@@ -240,11 +241,32 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                                 setMode(mode === "signin" ? "signup" : "signin");
                                 setError("");
                             }}
-                            className="font-medium text-orange-600 hover:text-orange-700"
+                            className="font-medium text-orange-600 hover:text-orange-700 cursor-pointer"
                         >
                             {mode === "signin" ? "Sign up" : "Sign in"}
                         </button>
                     </div>
+
+                    {/* Legal Notice */}
+                    <p className="mt-5 pt-4 border-t border-slate-100 text-center text-xs text-slate-500 leading-normal">
+                        By signing in or creating an account, you confirm you are 18+ and agree to our{" "}
+                        <Link
+                            href="/terms"
+                            onClick={onClose}
+                            className="font-medium text-slate-700 hover:text-orange-600 underline"
+                        >
+                            Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link
+                            href="/privacy"
+                            onClick={onClose}
+                            className="font-medium text-slate-700 hover:text-orange-600 underline"
+                        >
+                            Privacy Policy
+                        </Link>
+                        .
+                    </p>
                 </div>
             </div>
         </>

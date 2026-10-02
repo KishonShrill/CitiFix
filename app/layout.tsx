@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     },
     other: {
         "fb:app_id": "1036061575471786",
+        "og:logo": "https://citifix.betteriligancity.org/icon.svg",
     },
 
 };
