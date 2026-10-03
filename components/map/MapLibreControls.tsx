@@ -3,6 +3,8 @@
 import { type RefObject, useState, useEffect } from "react";
 import { Compass, Minus, Plus, Mountain } from "lucide-react";
 import { type MapRef } from "react-map-gl/maplibre";
+import { useUI } from "@/context/AppState";
+import { cn } from "@/utils/cn";
 
 interface MapControlsProps {
     mapRef: RefObject<MapRef | null>;
@@ -53,8 +55,15 @@ export default function MapControls({
         });
     };
 
+    const { isSidePanelOpen } = useUI();
+
     return (
-        <div className="pointer-events-auto absolute right-3 bottom-5 z-[40] flex flex-col gap-2">
+        <div
+            className={cn(
+                "pointer-events-auto absolute bottom-5 z-[40] flex flex-col gap-2 transition-[right] duration-300 ease-in-out",
+                isSidePanelOpen ? "right-[412px] max-sm:right-3" : "right-3"
+            )}
+        >
             {/* Detached 3D Button */}
             <button
                 type="button"

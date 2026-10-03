@@ -10,10 +10,12 @@ import { AdminQueue } from "@/components/admin/AdminQueue";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LegendModal } from "@/components/common/LegendModal";
+import { SidePanel } from "@/components/sidepanel/SidePanel";
 import { useReports, useReport, useDeleteReportAdmin } from "@/hooks/useReports";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Plus, HelpCircle } from "lucide-react";
+import { cn } from "@/utils/cn";
 import { toast } from "sonner";
 
 export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: string }) {
@@ -27,7 +29,9 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
         pickedLocation, setPickedLocation,
         isUserDashboardOpen, setIsUserDashboardOpen,
         isAdminQueueOpen, setIsAdminQueueOpen,
-        isAuthModalOpen, setIsAuthModalOpen
+        isAuthModalOpen, setIsAuthModalOpen,
+        isSidePanelOpen, setIsSidePanelOpen,
+        sidePanelTab, setSidePanelTab,
     } = useUI();
 
     const { selectedReportId, setSelectedReportId } = useMapState();
@@ -172,8 +176,17 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                     {user ? (
                         <UserMenu
                             user={user as any}
+                            isActive={isSidePanelOpen}
                             onMyReportsClick={() => setIsUserDashboardOpen(true)}
                             onAdminClick={() => setIsAdminQueueOpen(true)}
+                            onProfileClick={() => {
+                                if (isSidePanelOpen) {
+                                    setIsSidePanelOpen(false);
+                                } else {
+                                    setSidePanelTab("profile");
+                                    setIsSidePanelOpen(true);
+                                }
+                            }}
                         />
                     ) : (
                         <button
@@ -215,7 +228,12 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
 
 
             {reportsData && (
-                <div className="absolute top-20 right-4 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20">
+                <div
+                    className={cn(
+                        "absolute top-20 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20 transition-[right] duration-300 ease-in-out",
+                        isSidePanelOpen ? "right-[416px] max-sm:right-4" : "right-4"
+                    )}
+                >
                     {reportsData.data.length} report{reportsData.data.length !== 1 ? "s" : ""} visible
                 </div>
             )}
@@ -230,6 +248,27 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                         setPickedLocation(null);
                     }}
                     location={pickedLocation || undefined}
+                />
+            )}
+
+            {user && (
+                <SidePanel
+                    isOpen={isSidePanelOpen}
+                    onClose={() => {
+                        if (isSidePanelOpen) {
+                            setIsSidePanelOpen(false);
+                        } else {
+                            setSidePanelTab("profile");
+                            setIsSidePanelOpen(true);
+                        }
+                        console.log(isSidePanelOpen)
+                    }}
+                    activeTab={sidePanelTab}
+                    onTabChange={setSidePanelTab}
+                    user={user as any}
+                    onMyReportsClick={() => setIsUserDashboardOpen(true)}
+                    onAdminClick={() => setIsAdminQueueOpen(true)}
+                    onReportIssueClick={handleOpenReportModal}
                 />
             )}
 
