@@ -204,8 +204,6 @@ export const MapContainer = React.memo(function MapContainer({
             .then(res => res.json())
             .then(data => setIliganBoundaryData(data))
             .catch(err => console.error("Failed to load boundary data:", err));
-
-        console.log(center)
     }, []);
 
     /*
