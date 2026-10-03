@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
     X,
     User as UserIcon,
+    ActivityIcon,
     Shield,
     FileText,
     LogOut,
@@ -19,6 +20,8 @@ import {
     Eye,
     EyeOff,
     AlertCircle,
+    AlertTriangle,
+    Trash2,
     Loader2,
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
@@ -109,6 +112,10 @@ export function SidePanel({
     const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
     const [unlinkingProvider, setUnlinkingProvider] = useState<string | null>(null);
 
+    // Delete account state
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
     useEffect(() => {
         setCurrentTab(activeTab);
     }, [activeTab]);
@@ -151,7 +158,7 @@ export function SidePanel({
             await authClient.signOut();
             toast.success("Signed out successfully");
             onClose();
-            window.location.reload();
+            //window.location.reload();
         } catch (err: any) {
             toast.error(err?.message || "Failed to sign out");
             setIsSigningOut(false);
@@ -244,6 +251,31 @@ export function SidePanel({
         }
     };
 
+    const handleDeleteAccount = async () => {
+        setIsDeletingAccount(true);
+        try {
+            const res = await fetch("/api/v1/me", {
+                method: "DELETE",
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.error(data?.error?.message || "Failed to delete account");
+                setIsDeletingAccount(false);
+                return;
+            }
+
+            toast.success("Account deleted. All personal data removed and reports anonymized.");
+            setShowDeleteConfirmModal(false);
+            await authClient.signOut();
+            onClose();
+            window.location.href = "/";
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to delete account");
+            setIsDeletingAccount(false);
+        }
+    };
+
     const isAdmin = user?.role === "admin" || user?.role === "moderator";
     const roleLabel = user?.role === "admin" ? "Administrator" : user?.role === "moderator" ? "Moderator" : "Citizen Reporter";
 
@@ -255,6 +287,7 @@ export function SidePanel({
 
     const tabs = [
         { id: "profile", label: "Profile", icon: UserIcon },
+        { id: "actions", label: "Actions", icon: ActivityIcon },
     ];
 
     return (
@@ -336,6 +369,85 @@ export function SidePanel({
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-slate-50/40">
+                    {currentTab === "actions" && (
+                        <div className="space-y-5">
+                            {/* Quick Action Navigation */}
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+                                {onReportIssueClick && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onClose();
+                                            onReportIssueClick();
+                                        }}
+                                        className="cursor-pointer w-full px-4 py-3 text-left flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+                                                <Plus size={16} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-800 group-hover:text-orange-600 transition-colors">
+                                                    Report New Issue
+                                                </p>
+                                                <p className="text-xs text-slate-500">Pin a problem in Iligan City</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+                                    </button>
+                                )}
+
+                                {onMyReportsClick && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onClose();
+                                            onMyReportsClick();
+                                        }}
+                                        className="cursor-pointer w-full px-4 py-3 text-left flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                                <FileText size={16} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
+                                                    My Reports
+                                                </p>
+                                                <p className="text-xs text-slate-500">View status of submitted reports</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+                                    </button>
+                                )}
+
+                                {isAdmin && onAdminClick && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onClose();
+                                            onAdminClick();
+                                        }}
+                                        className="cursor-pointer w-full px-4 py-3 text-left flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                                                <Shield size={16} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-purple-700 group-hover:text-purple-800 transition-colors">
+                                                    Moderation Queue
+                                                </p>
+                                                <p className="text-xs text-slate-500">Review & verify civic reports</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {currentTab === "profile" && (
                         <div className="space-y-5">
                             {/* User Profile Card */}
@@ -362,6 +474,19 @@ export function SidePanel({
                                     {isAdmin ? <Shield size={13} className="text-orange-600" /> : <UserIcon size={13} className="text-orange-600" />}
                                     <span>{roleLabel}</span>
                                 </div>
+                            </div>
+
+                            {/* Sign Out Button */}
+                            <div className="pt-1">
+                                <button
+                                    type="button"
+                                    onClick={handleSignOut}
+                                    disabled={isSigningOut}
+                                    className="cursor-pointer w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm border border-slate-200 transition-colors disabled:opacity-50"
+                                >
+                                    <LogOut size={16} />
+                                    <span>{isSigningOut ? "Signing Out..." : "Sign Out"}</span>
+                                </button>
                             </div>
 
                             {/* Account Security & Connected Logins */}
@@ -626,81 +751,6 @@ export function SidePanel({
                                 )}
                             </div>
 
-                            {/* Quick Action Navigation */}
-                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
-                                {onReportIssueClick && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            onClose();
-                                            onReportIssueClick();
-                                        }}
-                                        className="cursor-pointer w-full px-4 py-3 text-left flex items-center justify-between hover:bg-slate-50 transition-colors group"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
-                                                <Plus size={16} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-800 group-hover:text-orange-600 transition-colors">
-                                                    Report New Issue
-                                                </p>
-                                                <p className="text-xs text-slate-500">Pin a problem in Iligan City</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
-                                    </button>
-                                )}
-
-                                {onMyReportsClick && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            onClose();
-                                            onMyReportsClick();
-                                        }}
-                                        className="cursor-pointer w-full px-4 py-3 text-left flex items-center justify-between hover:bg-slate-50 transition-colors group"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                                                <FileText size={16} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
-                                                    My Reports
-                                                </p>
-                                                <p className="text-xs text-slate-500">View status of submitted reports</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
-                                    </button>
-                                )}
-
-                                {isAdmin && onAdminClick && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            onClose();
-                                            onAdminClick();
-                                        }}
-                                        className="cursor-pointer w-full px-4 py-3 text-left flex items-center justify-between hover:bg-slate-50 transition-colors group"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-                                                <Shield size={16} />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-purple-700 group-hover:text-purple-800 transition-colors">
-                                                    Moderation Queue
-                                                </p>
-                                                <p className="text-xs text-slate-500">Review & verify civic reports</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight size={16} className="text-slate-400 group-hover:text-slate-600 transition-transform group-hover:translate-x-0.5" />
-                                    </button>
-                                )}
-                            </div>
-
                             {/* Legal & Policy Links */}
                             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-2.5">
                                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
@@ -732,22 +782,101 @@ export function SidePanel({
                                 </div>
                             </div>
 
-                            {/* Sign Out Button */}
-                            <div className="pt-2">
+                            {/* Danger Zone: Account Deletion */}
+                            <div className="bg-red-50/40 rounded-2xl border border-red-200/80 p-4 space-y-3">
+                                <div className="flex items-center gap-2 text-red-700">
+                                    <AlertTriangle size={15} className="shrink-0" />
+                                    <h4 className="text-xs font-bold uppercase tracking-wider">
+                                        Danger Zone
+                                    </h4>
+                                </div>
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                    Permanently delete your account. To preserve civic history, your submitted reports will remain on the public map with author set to <span className="font-semibold text-slate-800">"unknown"</span>.
+                                </p>
                                 <button
                                     type="button"
-                                    onClick={handleSignOut}
-                                    disabled={isSigningOut}
-                                    className="cursor-pointer w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-sm border border-red-200/80 transition-colors disabled:opacity-50"
+                                    onClick={() => setShowDeleteConfirmModal(true)}
+                                    className="cursor-pointer w-full py-2.5 px-3 bg-white hover:bg-red-50 text-red-600 text-xs font-semibold rounded-xl border border-red-200 shadow-xs transition-colors flex items-center justify-center gap-1.5"
                                 >
-                                    <LogOut size={16} />
-                                    <span>{isSigningOut ? "Signing Out..." : "Sign Out"}</span>
+                                    <Trash2 size={14} />
+                                    <span>Delete Account</span>
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
             </aside>
+
+            {/* Delete Account Confirmation Modal */}
+            {showDeleteConfirmModal && (
+                <div className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                        <div className="flex items-start gap-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                                <Trash2 size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-bold text-slate-900">
+                                    Delete Account Permanently?
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    This action is permanent and cannot be undone.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirmModal(false)}
+                                disabled={isDeletingAccount}
+                                className="cursor-pointer text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs text-slate-600 leading-relaxed">
+                            <p className="font-semibold text-slate-800">
+                                What happens when you delete your account:
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 text-slate-600">
+                                <li>All your login credentials and active sessions will be destroyed.</li>
+                                <li>Connected OAuth accounts (Google / GitHub) will be unlinked.</li>
+                                <li>
+                                    Your submitted civic reports will <span className="font-semibold text-slate-900">remain on the map</span> to help city maintenance, but your identity will be set to <span className="font-semibold text-slate-900">"unknown"</span>.
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="flex gap-2.5 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirmModal(false)}
+                                disabled={isDeletingAccount}
+                                className="cursor-pointer flex-1 py-2.5 px-4 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteAccount}
+                                disabled={isDeletingAccount}
+                                className="cursor-pointer flex-1 py-2.5 px-4 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                            >
+                                {isDeletingAccount ? (
+                                    <>
+                                        <Loader2 size={13} className="animate-spin" />
+                                        <span>Deleting...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 size={13} />
+                                        <span>Delete My Account</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
