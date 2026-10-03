@@ -42,6 +42,7 @@ interface MapContainerProps {
     flyToLocation?: { lat: number; lng: number };
     /** Fires whenever the center of the map changes */
     onCenterChange?: (center: { lat: number; lng: number }) => void;
+    isReportModalOpen?: boolean;
 }
 
 /*
@@ -182,6 +183,7 @@ export const MapContainer = React.memo(function MapContainer({
     onPinLocationChange,
     flyToLocation,
     onCenterChange,
+    isReportModalOpen,
 }: MapContainerProps) {
     const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
     const [iliganBoundaryData, setIliganBoundaryData] = useState<any>(null);
@@ -349,7 +351,7 @@ export const MapContainer = React.memo(function MapContainer({
                 ))}
 
                 {/* Draggable pin for location picking */}
-                {pinLocation && (
+                {pinLocation && !isReportModalOpen && (
                     <Marker
                         longitude={pinLocation.lng}
                         latitude={pinLocation.lat}
@@ -360,6 +362,7 @@ export const MapContainer = React.memo(function MapContainer({
                                 e.lngLat.lng,
                             );
                         }}
+                        style={{ zIndex: 60 }}
                         anchor="bottom"
                     >
                         <div className="flex flex-col items-center">
