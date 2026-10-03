@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { LogOut, Shield, FileText } from "lucide-react";
+import { LogOut, Shield, FileText, User as UserIcon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 interface User {
@@ -16,9 +16,11 @@ export interface UserMenuProps {
     user: User | null;
     onMyReportsClick?: () => void;
     onAdminClick?: () => void;
+    onProfileClick?: () => void;
+    isActive?: boolean;
 }
 
-export function UserMenu({ user, onMyReportsClick, onAdminClick }: UserMenuProps) {
+export function UserMenu({ user, onMyReportsClick, onAdminClick, onProfileClick, isActive }: UserMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleSignOut = async () => {
@@ -36,8 +38,18 @@ export function UserMenu({ user, onMyReportsClick, onAdminClick }: UserMenuProps
     return (
         <div className="relative">
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="cursor-pointer text-sm flex items-center gap-2 px-3 py-1 bg-white text-slate-700 hover:bg-slate-100 rounded-lg shadow-lg"
+                onClick={() => {
+                    if (onProfileClick) {
+                        onProfileClick();
+                    } else {
+                        setIsOpen((prev) => !prev);
+                    }
+                }}
+                className={`cursor-pointer text-sm flex items-center gap-2 px-3 py-1 rounded-lg shadow-lg transition-all ${
+                    isActive
+                        ? "bg-orange-50 text-orange-900 ring-2 ring-orange-500/80"
+                        : "bg-white text-slate-700 hover:bg-slate-100"
+                }`}
             >
                 <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                     {user.name?.charAt(0).toUpperCase() || "U"}
@@ -46,11 +58,24 @@ export function UserMenu({ user, onMyReportsClick, onAdminClick }: UserMenuProps
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
                     <div className="px-4 py-3 border-b border-slate-200">
                         <p className="font-medium text-slate-900">{user.name}</p>
                         <p className="text-sm text-slate-600">{user.email}</p>
                     </div>
+
+                    {onProfileClick && (
+                        <button
+                            onClick={() => {
+                                onProfileClick();
+                                setIsOpen(false);
+                            }}
+                            className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm flex items-center gap-2"
+                        >
+                            <UserIcon size={14} className="text-slate-400" />
+                            Account Profile
+                        </button>
+                    )}
 
                     <button
                         onClick={() => {

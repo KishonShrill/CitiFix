@@ -16,6 +16,10 @@ interface UIContextType {
     setIsAdminQueueOpen: (open: boolean) => void;
     isAuthModalOpen: boolean;
     setIsAuthModalOpen: (open: boolean) => void;
+    isSidePanelOpen: boolean;
+    setIsSidePanelOpen: (open: boolean) => void;
+    sidePanelTab: string;
+    setSidePanelTab: (tab: string) => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -28,6 +32,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
     const [isUserDashboardOpen, setIsUserDashboardOpen] = useState(false);
     const [isAdminQueueOpen, setIsAdminQueueOpen] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+    const [sidePanelTab, setSidePanelTab] = useState("profile");
 
     return (
         <UIContext.Provider value={{
@@ -38,6 +44,8 @@ export function UIProvider({ children }: { children: ReactNode }) {
             isUserDashboardOpen, setIsUserDashboardOpen,
             isAdminQueueOpen, setIsAdminQueueOpen,
             isAuthModalOpen, setIsAuthModalOpen,
+            isSidePanelOpen, setIsSidePanelOpen,
+            sidePanelTab, setSidePanelTab,
         }}>
             {children}
         </UIContext.Provider>
