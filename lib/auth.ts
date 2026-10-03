@@ -1,7 +1,8 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, APIError } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getDB } from "./db";
 import * as schema from "./auth-schema";
+import { isAllowedEmailDomain, ALLOWED_EMAIL_ERROR_MESSAGE } from "./email-validator";
 
 
 export function getAuth() {
@@ -10,14 +11,30 @@ export function getAuth() {
     const db = getDB();
 
     return betterAuth({
+        baseURL: process.env.BETTER_AUTH_URL,
         database: drizzleAdapter(db, {
             provider: "pg",
             schema,
         }),
+        databaseHooks: {
+            user: {
+                create: {
+                    before: async (user) => {
+                        if (!isAllowedEmailDomain(user.email)) {
+                            throw new APIError("BAD_REQUEST", {
+                                message: ALLOWED_EMAIL_ERROR_MESSAGE,
+                            });
+                        }
+                        return {
+                            data: user,
+                        };
+                    },
+                },
+            },
+        },
         emailAndPassword: {
             enabled: true,
         },
-        baseURL: process.env.BETTER_AUTH_URL,
         socialProviders: {
             google: {
                 clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string,

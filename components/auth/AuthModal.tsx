@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { isAllowedEmailDomain, ALLOWED_EMAIL_ERROR_MESSAGE } from "@/lib/email-validator";
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -26,6 +27,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         e.preventDefault();
         setLoading(true);
         setError("");
+
+        if (!isAllowedEmailDomain(email)) {
+            setError(ALLOWED_EMAIL_ERROR_MESSAGE);
+            setLoading(false);
+            return;
+        }
 
         const { error: authError } = await authClient.signUp.email({
             email,
@@ -166,6 +173,11 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
                                 className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                                 required
                             />
+                            {mode === "signup" && (
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Accepted: Gmail, Proton, Yahoo, Zoho, and iCloud
+                                </p>
+                            )}
                         </div>
 
                         <div>
