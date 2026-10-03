@@ -197,7 +197,14 @@ export function ReportSlideOut({
                 )}
             >
                 {/* ----------------- LEFT ISLAND: REPORT DOSSIER ----------------- */}
-                <div className="pointer-events-auto w-[440px] max-w-[45vw] bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/80 p-5 space-y-4 max-h-[calc(100dvh-5.5rem)] overflow-y-auto">
+                <div
+                    className={cn(
+                        "w-[440px] max-w-[45vw] bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/80 p-5 space-y-4 max-h-[calc(100dvh-5.5rem)] overflow-y-auto",
+                        selectedReportId
+                            ? "pointer-events-auto"
+                            : "pointer-events-none"
+                    )}
+                >
                     {isLoading || !report ? (
                         /* Left Island Skeleton */
                         <div className="space-y-4 animate-pulse">
@@ -330,7 +337,13 @@ export function ReportSlideOut({
                 </div>
 
                 {/* ----------------- RIGHT ISLAND: MEDIA & ACTION CONTROLS ----------------- */}
-                <div className="pointer-events-auto w-[360px] max-w-[40vw] bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/80 p-4 space-y-3 relative max-h-[calc(100dvh-5.5rem)] overflow-y-auto">
+                <div
+                    className={cn("w-[360px] max-w-[40vw] bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/80 p-4 space-y-3 relative max-h-[calc(100dvh-5.5rem)] overflow-y-auto",
+                        selectedReportId
+                            ? "pointer-events-auto"
+                            : "pointer-events-none"
+                    )}
+                >
                     {/* Top Close Button */}
                     <button
                         onClick={onClose}

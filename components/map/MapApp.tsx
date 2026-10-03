@@ -132,11 +132,12 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                 flyToLocation={panLocation}
                 pinLocation={isPickingLocation ? (pickedLocation || undefined) : undefined}
                 onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
+                isReportModalOpen={isReportModalOpen}
                 onCenterChange={setCurrentMapCenter}
             />
 
             {/* Top Bar */}
-            <div className="md:bg-white absolute top-0 left-0 right-0 z-30 px-4 py-3 md:py-2 flex items-center justify-between">
+            <div className="md:bg-white absolute top-0 left-0 right-0 z-50 md:z-70 md:z-50 px-4 py-3 md:py-2 flex items-center justify-between">
                 <div className="flex items-center gap-2 bg-white max-md:px-2 max-md:py-1 rounded-lg max-md:shadow-lg">
                     <Image
                         src="/images/logos/betteriligan-logo.svg"
