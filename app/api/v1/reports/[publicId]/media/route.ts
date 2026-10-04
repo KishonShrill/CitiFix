@@ -64,6 +64,11 @@ export async function POST(
         return sendError(400, "VALIDATION_ERROR", "File is required");
     }
 
+    const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB per photo
+    if (file.size > MAX_PHOTO_SIZE) {
+        return sendError(400, "VALIDATION_ERROR", "Photo exceeds the 5MB size limit");
+    }
+
     // Prepare Cloudinary upload signature
     const index = existingMedia.length + 1;
     const timestamp = Math.round(new Date().getTime() / 1000);

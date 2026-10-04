@@ -5,6 +5,7 @@ import { requireUser } from "@/app/api/_lib/api-guard";
 import { nanoid } from "nanoid";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { uploadImageToCloudinary, deleteCloudinaryImage, type UploadedImage } from "@/lib/cloudinary";
+import { sendDiscordReportNotification } from "@/lib/discord";
 
 export async function GET(request: Request) {
     const db = getDB();
@@ -189,6 +190,13 @@ export async function POST(request: Request) {
         return sendError(400, "VALIDATION_ERROR", "Maximum 3 photos allowed per report");
     }
 
+    const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB per photo
+    for (let i = 0; i < files.length; i++) {
+        if (files[i].size > MAX_PHOTO_SIZE) {
+            return sendError(400, "VALIDATION_ERROR", `Photo ${i + 1} exceeds the 5MB size limit`);
+        }
+    }
+
     // Generate unique public ID for the report
     const publicId = nanoid(12);
 
@@ -287,6 +295,28 @@ export async function POST(request: Request) {
             .innerJoin(problemType, eq(report.problemTypeId, problemType.id))
             .where(eq(report.id, publicId))
             .limit(1);
+
+        if (created) {
+            await sendDiscordReportNotification({
+                event: "submitted",
+                report: {
+                    id: created.id,
+                    title: created.title,
+                    description: created.description,
+                    address: created.address,
+                    barangay: created.barangay,
+                    severity: created.severity,
+                    createdAt: created.createdAt,
+                },
+                category: created.category,
+                problemType: created.problemType,
+                reporter: {
+                    name: user.name,
+                    email: user.email,
+                },
+                mediaUrl: created.url,
+            });
+        }
 
         return sendSuccess(created, 201);
     } catch (dbError) {

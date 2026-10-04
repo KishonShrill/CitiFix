@@ -1,9 +1,11 @@
 import { getDB } from "@/lib/db";
-import { report, media } from "@/lib/report-schema";
+import { report, media, category, problemType } from "@/lib/report-schema";
+import { user as userTable } from "@/lib/auth-schema";
 import { requireRole, createAuditLog } from "@/app/api/_lib/api-guard";
 import { sendSuccess, sendError } from "@/app/api/_lib/http";
 import { eq } from "drizzle-orm";
 import { deleteCloudinaryImage } from "@/lib/cloudinary";
+import { sendDiscordReportNotification } from "@/lib/discord";
 
 const VALID_STATUSES = ["submitted", "under_review", "verified", "rejected", "duplicate", "resolved", "hidden"] as const;
 
@@ -36,6 +38,9 @@ export async function POST(
     if (newStatus === foundReport.status) {
         return sendError(400, "NO_CHANGE", "Report is already in this status");
     }
+
+    // Preserve original media URL for notification before any deletion occurs
+    const notificationMediaUrl = foundReport.media;
 
     // If changing status to rejected, delete Cloudinary images first
     if (newStatus === "rejected") {
@@ -95,6 +100,56 @@ export async function POST(
             reason: reason ?? null,
         }
     );
+
+    // Send Discord webhook notification for acceptance (verified), rejection, or duplicate
+    if (newStatus === "verified" || newStatus === "rejected" || newStatus === "duplicate") {
+        const [cat] = await db
+            .select({ name: category.name })
+            .from(category)
+            .where(eq(category.id, foundReport.categoryId))
+            .limit(1);
+
+        const [pType] = await db
+            .select({ name: problemType.name })
+            .from(problemType)
+            .where(eq(problemType.id, foundReport.problemTypeId))
+            .limit(1);
+
+        let reporterInfo: { name: string | null; email: string | null } | null = null;
+        if (foundReport.userId) {
+            const [repUser] = await db
+                .select({ name: userTable.name, email: userTable.email })
+                .from(userTable)
+                .where(eq(userTable.id, foundReport.userId))
+                .limit(1);
+            if (repUser) {
+                reporterInfo = repUser;
+            }
+        }
+
+        await sendDiscordReportNotification({
+            event: newStatus,
+            report: {
+                id: foundReport.id,
+                title: foundReport.title,
+                description: foundReport.description,
+                address: foundReport.address,
+                barangay: foundReport.barangay,
+                severity: foundReport.severity,
+                createdAt: foundReport.createdAt,
+            },
+            category: cat,
+            problemType: pType,
+            reporter: reporterInfo,
+            mediaUrl: notificationMediaUrl,
+            actor: {
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            },
+            reason: reason ?? null,
+        });
+    }
 
     return sendSuccess(updated);
 }

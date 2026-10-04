@@ -258,19 +258,21 @@ export async function uploadReportMedia(publicId: string, file: File): Promise<R
     });
 
     if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: { message: "Failed to upload media" } })) as any;
+        const err = (await res.json().catch(() => ({ error: { message: "Failed to upload media" } }))) as {
+            error?: { message?: string };
+        };
         throw new Error(err.error?.message || "Failed to upload media");
     }
 
-    const json = (await res.json()) as SuccessResponse<ReportMedia>;
-    return json.data;
+    const json = (await res.json()) as { data?: ReportMedia } & ReportMedia;
+    return json.data || json;
 }
 
 export async function getReportMedia(publicId: string): Promise<ReportMedia[]> {
     const res = await fetch(`${API_BASE}/reports/${publicId}/media`);
     if (!res.ok) throw new Error("Failed to fetch media");
-    const json = (await res.json()) as SuccessResponse<ReportMedia[]>;
-    return json.data;
+    const json = (await res.json()) as { data?: ReportMedia[] } | ReportMedia[];
+    return Array.isArray(json) ? json : (json.data ?? []);
 }
 
 export async function deleteMedia(publicId: string, mediaId: string): Promise<void> {

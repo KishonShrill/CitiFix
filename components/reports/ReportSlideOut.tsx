@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { animate, createDraggable, type Draggable } from "animejs";
-import { useReport } from "@/hooks/useReports";
+import { useReport, useReportMedia } from "@/hooks/useReports";
 import { useMapState } from "@/context/AppState";
-import { X, Copy, Check, Share2, Maximize2, ImageOff } from "lucide-react";
+import { X, Copy, Check, Share2, Maximize2, ImageOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { getIcon } from "@/lib/icons";
 import { cn } from "@/utils/cn";
 import { toast } from "sonner";
@@ -30,9 +30,18 @@ export function ReportSlideOut({
     const previewImgRef = useRef<HTMLDivElement>(null);
     const { selectedReportId } = useMapState();
     const { data: report, isLoading, isFetching } = useReport(selectedReportId || "");
+    const { data: mediaItems = [] } = useReportMedia(selectedReportId || "");
+
+    const allMediaUrls: string[] =
+        mediaItems && mediaItems.length > 0
+            ? mediaItems.map((m) => m.url)
+            : report?.url
+                ? [report.url]
+                : [];
 
     const [isCopiedCoords, setIsCopiedCoords] = useState(false);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const [activeLightboxIndex, setActiveLightboxIndex] = useState(0);
 
     const draggableRef = useRef<any>(null);
     const onCloseRef = useRef(onClose);
@@ -40,7 +49,13 @@ export function ReportSlideOut({
         onCloseRef.current = onClose;
     }, [onClose]);
 
-    // Handle Escape key to close panel or lightbox
+    // Reset active photo index when selected report changes
+    useEffect(() => {
+        setActiveLightboxIndex(0);
+        setIsLightboxOpen(false);
+    }, [selectedReportId]);
+
+    // Handle Escape key to close panel or lightbox, and Arrow keys to navigate lightbox
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
@@ -49,11 +64,17 @@ export function ReportSlideOut({
                 } else if (isOpen) {
                     onClose();
                 }
+            } else if (isLightboxOpen && allMediaUrls.length > 1) {
+                if (e.key === "ArrowLeft") {
+                    setActiveLightboxIndex((prev) => (prev === 0 ? allMediaUrls.length - 1 : prev - 1));
+                } else if (e.key === "ArrowRight") {
+                    setActiveLightboxIndex((prev) => (prev === allMediaUrls.length - 1 ? 0 : prev + 1));
+                }
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, isLightboxOpen, onClose]);
+    }, [isOpen, isLightboxOpen, onClose, allMediaUrls.length]);
 
     // Initialize Mobile Anime.js Draggable
     useEffect(() => {
@@ -77,18 +98,17 @@ export function ReportSlideOut({
             releaseStiffness: 75,
             releaseEase: "out(5)",
             onUpdate: (d: Draggable) => {
-                panelRef.current.style.zIndex = "60";
+                panel.style.zIndex = "60";
                 if (d.y <= fullY + 50) {
-                    panelRef.current.style.overflowY = "auto";
+                    panel.style.overflowY = "auto";
                 } else {
-                    panelRef.current.style.overflowY = "hidden";
+                    panel.style.overflowY = "hidden";
                 }
                 if (image) {
                     if (d.y <= fullY + 50) {
-                        previewImgRef.current.style.pointerEvents = "auto";
-
+                        image.style.pointerEvents = "auto";
                     } else {
-                        previewImgRef.current.style.pointerEvents = "none";
+                        image.style.pointerEvents = "none";
                     }
                 }
             },
@@ -99,7 +119,7 @@ export function ReportSlideOut({
             },
             onDrag: (d: Draggable) => {
                 if (d.y > fullY + 50) {
-                    panelRef.current.scrollTo({
+                    panel.scrollTo({
                         top: 0,
                         behavior: "smooth",
                     });
@@ -365,31 +385,82 @@ export function ReportSlideOut({
                     ) : (
                         /* Right Island Content */
                         <>
-                            <div className="pr-8">
+                            <div className="flex items-center justify-between pr-8">
                                 <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     Report Media
                                 </h3>
+                                {allMediaUrls.length > 1 && (
+                                    <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                                        {allMediaUrls.length} photos
+                                    </span>
+                                )}
                             </div>
 
                             {/* Media Box */}
-                            {report.url ? (
-                                <div
-                                    onClick={() => setIsLightboxOpen(true)}
-                                    className="relative group w-full h-48 bg-slate-100 rounded-xl overflow-hidden cursor-pointer border border-slate-200 shadow-inner"
-                                >
-                                    <Image
-                                        src={report.url}
-                                        alt={report.title}
-                                        fill
-                                        sizes="360px"
-                                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                    />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-xs text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1.5">
-                                            <Maximize2 size={13} />
-                                            <span>Click to expand</span>
+                            {allMediaUrls.length > 0 ? (
+                                <div className="space-y-2">
+                                    {/* Primary Main Photo Preview */}
+                                    <div
+                                        onClick={() => {
+                                            setActiveLightboxIndex(0);
+                                            setIsLightboxOpen(true);
+                                        }}
+                                        className="relative group w-full h-48 bg-slate-100 rounded-xl overflow-hidden cursor-pointer border border-slate-200 shadow-inner"
+                                    >
+                                        <Image
+                                            src={allMediaUrls[0]}
+                                            alt={report.title}
+                                            fill
+                                            sizes="360px"
+                                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-xs text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1.5">
+                                                <Maximize2 size={13} />
+                                                <span>Click to expand</span>
+                                            </div>
                                         </div>
+                                        {allMediaUrls.length > 1 && (
+                                            <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-md">
+                                                1 / {allMediaUrls.length}
+                                            </div>
+                                        )}
                                     </div>
+
+                                    {/* Remaining Photos Thumbnails Grid */}
+                                    {allMediaUrls.length > 1 && (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {allMediaUrls.slice(1).map((url, index) => {
+                                                const photoIndex = index + 1;
+                                                return (
+                                                    <div
+                                                        key={photoIndex}
+                                                        onClick={() => {
+                                                            setActiveLightboxIndex(photoIndex);
+                                                            setIsLightboxOpen(true);
+                                                        }}
+                                                        className="relative group aspect-video bg-slate-100 rounded-lg overflow-hidden cursor-pointer border border-slate-200 hover:border-blue-400 transition-all shadow-2xs"
+                                                    >
+                                                        <Image
+                                                            src={url}
+                                                            alt={`${report.title} photo ${photoIndex + 1}`}
+                                                            fill
+                                                            sizes="180px"
+                                                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1">
+                                                                <Maximize2 size={11} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="absolute bottom-1.5 right-1.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-medium px-1.5 py-0.5 rounded">
+                                                            {photoIndex + 1} / {allMediaUrls.length}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="w-full h-36 bg-slate-50 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 gap-1.5">
@@ -544,19 +615,59 @@ export function ReportSlideOut({
                         </div>
 
                         {/* Mobile Media */}
-                        {report.url && (
-                            <div
-                                ref={previewImgRef}
-                                onClick={() => setIsLightboxOpen(true)}
-                                className="relative w-full h-48 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 cursor-pointer"
-                            >
-                                <Image
-                                    src={report.url}
-                                    alt={report.title}
-                                    fill
-                                    sizes="100vw"
-                                    className="object-cover"
-                                />
+                        {allMediaUrls.length > 0 && (
+                            <div className="space-y-2">
+                                <div
+                                    ref={previewImgRef}
+                                    onClick={() => {
+                                        setActiveLightboxIndex(0);
+                                        setIsLightboxOpen(true);
+                                    }}
+                                    className="relative w-full h-48 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 cursor-pointer"
+                                >
+                                    <Image
+                                        src={allMediaUrls[0]}
+                                        alt={report.title}
+                                        fill
+                                        sizes="100vw"
+                                        className="object-cover"
+                                    />
+                                    {allMediaUrls.length > 1 && (
+                                        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-md">
+                                            1 / {allMediaUrls.length}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Mobile Remaining Photos Grid */}
+                                {allMediaUrls.length > 1 && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {allMediaUrls.slice(1).map((url, index) => {
+                                            const photoIndex = index + 1;
+                                            return (
+                                                <div
+                                                    key={photoIndex}
+                                                    onClick={() => {
+                                                        setActiveLightboxIndex(photoIndex);
+                                                        setIsLightboxOpen(true);
+                                                    }}
+                                                    className="relative aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200 cursor-pointer"
+                                                >
+                                                    <Image
+                                                        src={url}
+                                                        alt={`${report.title} photo ${photoIndex + 1}`}
+                                                        fill
+                                                        sizes="50vw"
+                                                        className="object-cover"
+                                                    />
+                                                    <div className="absolute bottom-1.5 right-1.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-medium px-1.5 py-0.5 rounded">
+                                                        {photoIndex + 1} / {allMediaUrls.length}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -650,31 +761,101 @@ export function ReportSlideOut({
             {/* ========================================================================= */}
             {/* FULLSCREEN LIGHTBOX MODAL                                                 */}
             {/* ========================================================================= */}
-            {isLightboxOpen && report?.url && (
+            {isLightboxOpen && allMediaUrls.length > 0 && (
                 <div
-                    className="fixed inset-0 z-70 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+                    className="fixed inset-0 z-70 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
                     onClick={() => setIsLightboxOpen(false)}
                 >
+                    {/* Top Counter Badge */}
+                    {allMediaUrls.length > 1 && (
+                        <div className="absolute top-4 left-4 text-white bg-black/50 border border-white/20 px-3 py-1 rounded-full text-xs font-medium z-50">
+                            {activeLightboxIndex + 1} / {allMediaUrls.length}
+                        </div>
+                    )}
+
+                    {/* Close Button */}
                     <button
                         onClick={() => setIsLightboxOpen(false)}
-                        className="cursor-pointer absolute top-4 right-4 text-white hover:text-slate-300 p-2 rounded-full bg-black/40 border border-white/20"
+                        className="cursor-pointer absolute top-4 right-4 text-white hover:text-slate-300 p-2 rounded-full bg-black/50 border border-white/20 z-50 transition-colors"
                         title="Close (Esc)"
                     >
-                        <X size={24} />
+                        <X size={22} />
                     </button>
 
+                    {/* Previous Button */}
+                    {allMediaUrls.length > 1 && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveLightboxIndex((prev) => (prev === 0 ? allMediaUrls.length - 1 : prev - 1));
+                            }}
+                            className="cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-slate-200 bg-black/50 hover:bg-black/70 border border-white/20 p-2.5 rounded-full z-50 transition-all hover:scale-105"
+                            title="Previous photo (Left Arrow)"
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+                    )}
+
+                    {/* Next Button */}
+                    {allMediaUrls.length > 1 && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveLightboxIndex((prev) => (prev === allMediaUrls.length - 1 ? 0 : prev + 1));
+                            }}
+                            className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-slate-200 bg-black/50 hover:bg-black/70 border border-white/20 p-2.5 rounded-full z-50 transition-all hover:scale-105"
+                            title="Next photo (Right Arrow)"
+                        >
+                            <ChevronRight size={24} />
+                        </button>
+                    )}
+
+                    {/* Main Image View */}
                     <div
-                        className="relative w-full h-[85dvh] overflow-auto flex justify-center"
+                        className="relative w-full h-[80dvh] max-w-5xl flex items-center justify-center overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <Image
-                            src={report.url}
-                            alt={report.title}
+                            src={allMediaUrls[activeLightboxIndex] || allMediaUrls[0]}
+                            alt={`${report?.title || "Report photo"} ${activeLightboxIndex + 1}`}
                             unoptimized
-                            className="object-contain w-full"
+                            className="object-contain max-h-full w-auto max-w-full"
+                            fill
                             priority
                         />
                     </div>
+
+                    {/* Bottom Thumbnail Selector in Lightbox */}
+                    {allMediaUrls.length > 1 && (
+                        <div
+                            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 z-50 max-w-[90vw] overflow-x-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {allMediaUrls.map((url, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setActiveLightboxIndex(idx)}
+                                    className={cn(
+                                        "relative w-12 h-12 rounded-lg overflow-hidden border-2 transition-all cursor-pointer shrink-0",
+                                        activeLightboxIndex === idx
+                                            ? "border-blue-500 scale-105 shadow-md"
+                                            : "border-transparent opacity-60 hover:opacity-100"
+                                    )}
+                                    title={`View photo ${idx + 1}`}
+                                >
+                                    <Image
+                                        src={url}
+                                        alt={`Thumbnail ${idx + 1}`}
+                                        fill
+                                        sizes="48px"
+                                        className="object-cover"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         </>
