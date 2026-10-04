@@ -115,20 +115,34 @@ export function LocationProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         let mounted = true;
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    if (mounted) {
-                        setUserLocation([position.coords.longitude, position.coords.latitude]);
-                    }
-                },
-                (error) => {
-                    console.log("Geolocation error:", error);
-                },
-                { timeout: 10000 }
-            );
-        }
-        return () => { mounted = false; };
+        let intervalId: ReturnType<typeof setInterval> | null = null;
+
+        const updateLocation = () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        if (mounted) {
+                            setUserLocation([position.coords.longitude, position.coords.latitude]);
+                        }
+                    },
+                    (error) => {
+                        console.log("Geolocation error:", error);
+                    },
+                    { timeout: 10000, enableHighAccuracy: true }
+                );
+            }
+        };
+
+        // Initial fetch
+        updateLocation();
+
+        // Refresh every 5 seconds
+        intervalId = setInterval(updateLocation, 5000);
+
+        return () => {
+            mounted = false;
+            if (intervalId) clearInterval(intervalId);
+        };
     }, []);
 
     return (

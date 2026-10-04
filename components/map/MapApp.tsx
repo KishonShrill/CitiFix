@@ -110,7 +110,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
 
     if (isCheckingAuth) {
         return (
-            <div className="w-full h-screen flex flex-col gap-2 items-center justify-center bg-slate-50">
+            <div className="w-full h-dvh flex flex-col gap-2 items-center justify-center bg-slate-50">
                 <Image
                     src="/images/logos/betteriligan-logo.svg"
                     alt="BetterIligan Logo"

@@ -12,10 +12,6 @@ body {
     margin: 0;
 }
 
-a {
-    color: inherit;
-}
-
 button,
 input {
     cursor: pointer;

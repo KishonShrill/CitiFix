@@ -348,6 +348,19 @@ export const MapContainer = React.memo(function MapContainer({
                     />
                 ))}
 
+                {/* User Location Marker */}
+                <Marker
+                    longitude={center[0]}
+                    latitude={center[1]}
+                    anchor="center"
+                    style={{ zIndex: 55 }}
+                >
+                    <div className="relative flex items-center justify-center">
+                        <div className="w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg" />
+                        <div className="absolute w-8 h-8 bg-blue-500 rounded-full animate-ping opacity-75" />
+                    </div>
+                </Marker>
+
                 {/* Draggable pin for location picking */}
                 {pinLocation && !isReportModalOpen && (
                     <Marker
