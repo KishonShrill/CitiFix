@@ -106,47 +106,99 @@ export function useMapState() {
 // --- User Location Context ---
 interface LocationContextType {
     userLocation: [number, number];
+    locationEnabled: boolean;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
 export function LocationProvider({ children }: { children: ReactNode }) {
-    const [userLocation, setUserLocation] = useState<[number, number]>([124.2418, 8.2302]);
+    const [locationEnabled, setLocationEnabled] = useState(false);
+    const [userLocation, setUserLocation] = useState<[number, number]>([
+        124.2418,
+        8.2302,
+    ]);
 
     useEffect(() => {
         let mounted = true;
-        let intervalId: ReturnType<typeof setInterval> | null = null;
+        let watchId: number | null = null;
 
-        const updateLocation = () => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        if (mounted) {
-                            setUserLocation([position.coords.longitude, position.coords.latitude]);
-                        }
-                    },
-                    (error) => {
-                        console.log("Geolocation error:", error);
-                    },
-                    { timeout: 10000, enableHighAccuracy: true }
-                );
+        const startLocationWatch = async () => {
+            if (!("geolocation" in navigator)) {
+                console.log("Geolocation is not supported.");
+                return;
             }
+
+            // Check permission state if supported
+            if ("permissions" in navigator) {
+                try {
+                    const permission = await navigator.permissions.query({
+                        name: "geolocation",
+                    });
+
+                    if (permission.state === "denied") {
+                        console.log("Location permission denied.");
+                        return;
+                    }
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    if (!mounted) return;
+
+                    setUserLocation([
+                        position.coords.longitude,
+                        position.coords.latitude,
+                    ]);
+
+                    setLocationEnabled(true);
+                },
+                (error) => {
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            console.log("Location permission denied.");
+                            break;
+
+                        case error.POSITION_UNAVAILABLE:
+                            console.log("Location unavailable.");
+                            break;
+
+                        case error.TIMEOUT:
+                            console.log("Location request timed out.");
+                            break;
+
+                        default:
+                            setLocationEnabled(false);
+                            break;
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 5000,
+                }
+            );
         };
 
-        // Initial fetch
-        updateLocation();
-
-        // Refresh every 5 seconds
-        intervalId = setInterval(updateLocation, 5000);
+        startLocationWatch();
 
         return () => {
             mounted = false;
-            if (intervalId) clearInterval(intervalId);
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+            }
         };
     }, []);
 
     return (
-        <LocationContext.Provider value={{ userLocation }}>
+        <LocationContext.Provider
+            value={{
+                userLocation,
+                locationEnabled,
+            }}>
             {children}
         </LocationContext.Provider>
     );

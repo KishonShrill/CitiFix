@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import { useUserLocation } from "@/context/AppState";
 import MapGL, {
     Source,
     Layer,
@@ -188,6 +189,8 @@ export const MapContainer = React.memo(function MapContainer({
     const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
     const [iliganBoundaryData, setIliganBoundaryData] = useState<any>(null);
     const mapRef = useRef<MapRef>(null);
+    const { locationEnabled } = useUserLocation();
+
 
     useEffect(() => {
         if (flyToLocation && mapRef.current) {
@@ -349,17 +352,19 @@ export const MapContainer = React.memo(function MapContainer({
                 ))}
 
                 {/* User Location Marker */}
-                <Marker
-                    longitude={center[0]}
-                    latitude={center[1]}
-                    anchor="center"
-                    style={{ zIndex: 55 }}
-                >
-                    <div className="relative flex items-center justify-center">
-                        <div className="w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg" />
-                        <div className="absolute w-8 h-8 bg-blue-500 rounded-full animate-ping opacity-75" />
-                    </div>
-                </Marker>
+                {locationEnabled && (
+                    <Marker
+                        longitude={center[0]}
+                        latitude={center[1]}
+                        anchor="center"
+                        style={{ zIndex: 50 }}
+                    >
+                        <div className="relative flex items-center justify-center">
+                            <div className="w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-lg" />
+                            <div className="absolute w-8 h-8 bg-blue-500 rounded-full animate-ping opacity-75" />
+                        </div>
+                    </Marker>
+                )}
 
                 {/* Draggable pin for location picking */}
                 {pinLocation && !isReportModalOpen && (

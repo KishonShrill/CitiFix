@@ -113,12 +113,12 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         <>
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/30 z-40"
+                className="fixed inset-0 bg-black/30 z-50"
                 onClick={onClose}
             />
 
             {/* Modal */}
-            <div className="fixed max-h-[95dvh] flex items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-50">
+            <div className="fixed inset-y-4 flex items-center justify-center left-4 right-4 top-1/2 -translate-y-1/2 mx-auto max-h-[95dvh] w-auto max-w-md z-50">
                 <div className="p-6 h-fit bg-white shadow-xl rounded-lg inset-4 sm:inset-auto">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">

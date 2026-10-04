@@ -305,7 +305,7 @@ export function SidePanel({
             <aside
                 aria-label="Side Panel"
                 className={cn(
-                    "fixed top-0 right-0 h-full w-full sm:w-[400px] z-50 bg-white shadow-2xl border-l border-slate-200 flex flex-col transition-transform duration-300 ease-in-out",
+                    "fixed top-0 right-0 h-full w-full sm:w-[400px] z-70 bg-white shadow-2xl border-l border-slate-200 flex flex-col transition-transform duration-300 ease-in-out",
                     isOpen ? "translate-x-0 pointer-events-auto" : "translate-x-full pointer-events-none"
                 )}
             >
