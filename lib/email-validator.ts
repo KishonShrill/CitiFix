@@ -4,6 +4,7 @@ export const ALLOWED_EMAIL_PROVIDERS = [
     "Yahoo",
     "Zoho",
     "iCloud",
+    "MSU-IIT",
 ] as const;
 
 export const ALLOWED_EMAIL_ERROR_MESSAGE =
@@ -27,6 +28,7 @@ export function getEmailDomain(email: string): string {
  * - Yahoo (yahoo.com, ymail.com, myyahoo.com, and regional ccTLDs like yahoo.com.ph, yahoo.co.uk)
  * - Zoho (zoho.com, zohomail.com, zoho.eu, zohomail.eu, zoho.in, zohomail.in, etc.)
  * - iCloud / Apple (icloud.com, me.com, mac.com)
+ * - MSU-IIT (g.msuiit.edu.ph)
  */
 export function isAllowedEmailDomain(email: string): boolean {
     const domain = getEmailDomain(email);
@@ -75,6 +77,11 @@ export function isAllowedEmailDomain(email: string): boolean {
         domain === "me.com" ||
         domain === "mac.com"
     ) {
+        return true;
+    }
+
+    // 6. MSU-IIT Academy
+    if (domain === "g.msuiit.edu.ph") {
         return true;
     }
 

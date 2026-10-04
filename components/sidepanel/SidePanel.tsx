@@ -187,7 +187,7 @@ export function SidePanel({
                 },
                 body: JSON.stringify({ newPassword }),
             });
-            const data = await res.json();
+            const data = (await res.json()) as any;
 
             if (!res.ok) {
                 setPasswordError(data?.error?.message || "Failed to set password");
@@ -257,7 +257,7 @@ export function SidePanel({
             const res = await fetch("/api/v1/me", {
                 method: "DELETE",
             });
-            const data = await res.json();
+            const data = (await res.json()) as any;
 
             if (!res.ok) {
                 toast.error(data?.error?.message || "Failed to delete account");
@@ -630,7 +630,7 @@ export function SidePanel({
                                 )}
 
                                 {/* Connected Social Accounts */}
-                                {process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+                                {(process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
                                     <div className="space-y-2 pt-1 border-t border-slate-100">
                                         <p className="text-[11px] font-semibold text-slate-500">Connected Accounts</p>
 

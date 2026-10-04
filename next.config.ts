@@ -54,7 +54,11 @@ const nextConfig: NextConfig = {
         ];
     },
     allowedDevOrigins: LOCAL_IP ? [LOCAL_IP] : [],
-
+    experimental: {
+        serverActions: {
+            bodySizeLimit: "16mb",
+        },
+    },
 };
 
 export default nextConfig;
