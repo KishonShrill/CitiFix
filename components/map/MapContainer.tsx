@@ -10,6 +10,7 @@ import MapGL, {
     type MapRef,
     type MapLayerMouseEvent,
     type ViewStateChangeEvent,
+    type MarkerDragEvent,
 } from "react-map-gl/maplibre";
 import * as LucideIcons from "lucide-react";
 import type { LucideProps } from "lucide-react";
@@ -21,6 +22,7 @@ import workerUrl from "maplibre-gl/dist/maplibre-gl-worker?worker&url";
 setWorkerUrl(workerUrl);
 
 import MapControls from "./MapLibreControls";
+import { MapLoupe } from "./MapLoupe";
 
 interface MapContainerProps {
     reports: Report[];
@@ -189,8 +191,35 @@ export const MapContainer = React.memo(function MapContainer({
     const [isTerrainEnabled, setIsTerrainEnabled] = useState(false);
     const [iliganBoundaryData, setIliganBoundaryData] = useState<any>(null);
     const mapRef = useRef<MapRef>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const { locationEnabled } = useUserLocation();
 
+    // Map Loupe state for mobile pin picking
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+    const [isDraggingPin, setIsDraggingPin] = useState(false);
+    const [dragCoords, setDragCoords] = useState<{ lat: number; lng: number } | null>(null);
+    const [dragScreenPos, setDragScreenPos] = useState<{ x: number; y: number } | null>(null);
+    const [currentZoom, setCurrentZoom] = useState(zoom);
+    const [currentBearing, setCurrentBearing] = useState(0);
+
+    // Track container dimensions for magnifier edge clamping
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const updateSize = () => {
+            setContainerSize({
+                width: el.clientWidth,
+                height: el.clientHeight,
+            });
+        };
+
+        updateSize();
+        const ro = new ResizeObserver(updateSize);
+        ro.observe(el);
+
+        return () => ro.disconnect();
+    }, []);
 
     useEffect(() => {
         if (flyToLocation && mapRef.current) {
@@ -226,6 +255,8 @@ export const MapContainer = React.memo(function MapContainer({
             lat: mapCenter.lat,
             lng: mapCenter.lng,
         });
+        setCurrentZoom(mapRef.current.getZoom());
+        setCurrentBearing(mapRef.current.getBearing());
     }, [onBoundsChange, onCenterChange]);
 
     /*
@@ -233,11 +264,15 @@ export const MapContainer = React.memo(function MapContainer({
      */
     const handleMove = useCallback((evt: ViewStateChangeEvent) => {
         if (onMove) onMove(evt);
-        if (onCenterChange && evt.viewState) {
-            onCenterChange({
-                lat: evt.viewState.latitude,
-                lng: evt.viewState.longitude,
-            });
+        if (evt.viewState) {
+            setCurrentZoom(evt.viewState.zoom);
+            setCurrentBearing(evt.viewState.bearing || 0);
+            if (onCenterChange) {
+                onCenterChange({
+                    lat: evt.viewState.latitude,
+                    lng: evt.viewState.longitude,
+                });
+            }
         }
         if (!mapRef.current) return;
 
@@ -266,6 +301,7 @@ export const MapContainer = React.memo(function MapContainer({
 
     return (
         <div
+            ref={containerRef}
             className="relative h-full w-full"
             style={{ minHeight: "100dvh" }}
         >
@@ -372,11 +408,47 @@ export const MapContainer = React.memo(function MapContainer({
                         longitude={pinLocation.lng}
                         latitude={pinLocation.lat}
                         draggable={!!onPinLocationChange}
-                        onDragEnd={(e) => {
+                        onDragStart={(e: MarkerDragEvent) => {
+                            setIsDraggingPin(true);
+                            setDragCoords({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+                            if (mapRef.current) {
+                                const pt = mapRef.current.project([e.lngLat.lng, e.lngLat.lat]);
+                                setDragScreenPos({ x: pt.x, y: pt.y });
+                            }
+                            if (typeof navigator !== "undefined" && navigator.vibrate) {
+                                try {
+                                    navigator.vibrate(15);
+                                } catch {
+                                    // ignore vibration errors if not permitted
+                                }
+                            }
+                        }}
+                        onDrag={(e: MarkerDragEvent) => {
+                            setDragCoords({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+                            if (mapRef.current) {
+                                const pt = mapRef.current.project([e.lngLat.lng, e.lngLat.lat]);
+                                setDragScreenPos({ x: pt.x, y: pt.y });
+                            }
                             onPinLocationChange?.(
                                 e.lngLat.lat,
                                 e.lngLat.lng,
                             );
+                        }}
+                        onDragEnd={(e: MarkerDragEvent) => {
+                            setIsDraggingPin(false);
+                            setDragCoords(null);
+                            setDragScreenPos(null);
+                            onPinLocationChange?.(
+                                e.lngLat.lat,
+                                e.lngLat.lng,
+                            );
+                            if (typeof navigator !== "undefined" && navigator.vibrate) {
+                                try {
+                                    navigator.vibrate(10);
+                                } catch {
+                                    // ignore vibration errors if not permitted
+                                }
+                            }
                         }}
                         style={{ zIndex: 60 }}
                         anchor="bottom"
@@ -396,6 +468,24 @@ export const MapContainer = React.memo(function MapContainer({
                     </Marker>
                 )}
             </MapGL>
+
+            {/* Magnifying Loupe Overlay when dragging pin */}
+            {pinLocation && !isReportModalOpen && (
+                <MapLoupe
+                    isVisible={isDraggingPin}
+                    coords={dragCoords || pinLocation}
+                    screenPos={
+                        dragScreenPos ||
+                        (mapRef.current && pinLocation
+                            ? mapRef.current.project([pinLocation.lng, pinLocation.lat])
+                            : null)
+                    }
+                    containerSize={containerSize}
+                    parentZoom={currentZoom}
+                    parentBearing={currentBearing}
+                    mapStyle="https://tiles.openfreemap.org/styles/liberty"
+                />
+            )}
         </div >
     );
 });
