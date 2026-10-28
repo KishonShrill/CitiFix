@@ -36,7 +36,7 @@ export function getAuth() {
             enabled: true,
         },
         account: {
-            storeStateStrategy: "cookie",
+            storeStateStrategy: "database",
             accountLinking: {
                 enabled: true,
                 trustedProviders: ["google", "github"],
@@ -46,6 +46,7 @@ export function getAuth() {
             google: {
                 clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string,
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+                prompt: "select_account",
             },
             github: {
                 clientId: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID as string,

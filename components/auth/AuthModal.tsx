@@ -84,7 +84,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         try {
             await authClient.signIn.social({
                 provider: "google",
-                callbackURL: window.location.href,
             });
         } catch (err) {
             setLoading(false);
@@ -99,7 +98,6 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         try {
             await authClient.signIn.social({
                 provider: "github",
-                callbackURL: window.location.href,
             });
         } catch (err) {
             setLoading(false);
