@@ -36,6 +36,7 @@ export function getAuth() {
             enabled: true,
         },
         account: {
+            storeStateStrategy: "cookie",
             accountLinking: {
                 enabled: true,
                 trustedProviders: ["google", "github"],
