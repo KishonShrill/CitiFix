@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useUI, useMapState, useUserLocation } from "@/context/AppState";
 import { MapContainer } from "@/components/map/MapContainer";
+import { ReportCarousel } from "@/components/map/ReportCarousel";
 import { ReportModal } from "@/components/reports/ReportModal";
 import { ReportSlideOut } from "@/components/reports/ReportSlideOut";
 import { UserDashboard } from "@/components/dashboard/UserDashboard";
@@ -138,6 +139,14 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
                 onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
                 isReportModalOpen={isReportModalOpen}
                 onCenterChange={setCurrentMapCenter}
+            />
+
+            {/* Floating Issue Carousel */}
+            <ReportCarousel
+                reports={reportsData?.data || []}
+                selectedReportId={selectedReportId || undefined}
+                onReportSelect={setSelectedReportId}
+                isSidePanelOpen={isSidePanelOpen}
             />
 
             {/* Top Bar */}

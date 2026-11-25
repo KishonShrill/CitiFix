@@ -1,53 +1,51 @@
 {
-    "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "citifix",
-    "compatibility_date": "2026-09-17",
-    "compatibility_flags": [
-        "nodejs_compat"
-    ],
-    "observability": {
-        "logs": {
-            "enabled": true,
-            "head_sampling_rate": 1,
-            "invocation_logs": true,
-            "persist": true
-        },
-        "traces": {
-            "enabled": false,
-            "head_sampling_rate": 1,
-            "persist": true
-        }
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "citifix",
+  "compatibility_date": "2026-09-17",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
     },
-    "main": "vinext/server/fetch-handler",
-    "assets": {
-        "directory": "dist/client",
-        "not_found_handling": "none",
-        "binding": "ASSETS"
-    },
-    "cache": {
-        "enabled": true,
-    },
-    "services": [
-        {
-            "binding": "WORKER_SELF_REFERENCE",
-            "service": "citifix"
-        }
-    ],
-    "images": {
-        "binding": "IMAGES"
-    },
-    "vars": {
-        "BETTER_AUTH_URL": "https://citifix.betteriligancity.org",
-        "SUPABASE_PUBLISHABLE": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
-        "NEXT_PUBLIC_GOOGLE_CLIENT_ID": "942756139317-qhoma3pvf523s3eeq250cea35t9hj04s.apps.googleusercontent.com",
-        "NEXT_PUBLIC_GITHUB_CLIENT_ID": "Ov23liiPxucWxeJp6lvw",
-        "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlmabgte3",
-        "NEXT_PUBLIC_CLOUDINARY_API_KEY": "264546821783396"
-    },
-    "kv_namespaces": [
-        {
-            "binding": "CITYFIX_KV_CACHE",
-            "id": "e7016d7d9fe9448d929b38a1f7086b9b"
-        }
-    ]
+    "traces": {
+      "enabled": false,
+      "head_sampling_rate": 1,
+      "persist": true
+    }
+  },
+  "main": "vinext/server/fetch-handler",
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS"
+  },
+  "cache": {
+    "enabled": true,
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "citifix"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "vars": {
+    "BETTER_AUTH_URL": "https://citifix.betteriligancity.org",
+    "SUPABASE_PUBLISHABLE": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
+    "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlmabgte3",
+    "NEXT_PUBLIC_CLOUDINARY_API_KEY": "264546821783396"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "CITYFIX_KV_CACHE",
+      "id": "e7016d7d9fe9448d929b38a1f7086b9b"
+    }
+  ]
 }
