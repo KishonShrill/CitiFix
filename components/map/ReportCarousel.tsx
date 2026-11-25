@@ -24,6 +24,9 @@ export function ReportCarousel({
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
+    // Hover state for auto-hide / show on bottom-middle trigger hover
+    const [isHovered, setIsHovered] = useState(false);
+
     // Drag to scroll state for cursor style
     const [isDraggingState, setIsDraggingState] = useState(false);
 
@@ -46,7 +49,7 @@ export function ReportCarousel({
         });
     }, [reports]);
 
-    // Scroll to selected card when selectedReportId changes
+    // Scroll to selected card when selectedReportId changes (without forcing carousel open)
     useEffect(() => {
         if (!selectedReportId) return;
         const cardEl = cardRefs.current.get(selectedReportId);
@@ -157,134 +160,154 @@ export function ReportCarousel({
     if (sortedReports.length === 0) return null;
 
     return (
-        <div
-            className={cn(
-                "absolute bottom-5 z-40 pointer-events-none transition-all duration-300 ease-in-out left-3 right-3 md:left-6",
-                isSidePanelOpen ? "md:right-[424px]" : "md:right-6"
-            )}
-        >
-            <div className="relative group/carousel max-w-7xl mx-auto pointer-events-auto">
-                {/* Left Navigation Arrow (Desktop only) */}
-                <button
-                    type="button"
-                    onClick={handleScrollLeft}
-                    aria-label="Scroll left"
-                    className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-xl border border-slate-200 text-slate-700 hover:bg-white hover:scale-105 active:scale-95 transition-all opacity-0 group-hover/carousel:opacity-100 backdrop-blur-sm"
-                >
-                    <ChevronLeft className="h-5 w-5" />
-                </button>
+        <>
+            {/* Bottom-Middle Trigger Area (Invisible half-circle / hover trigger zone) */}
+            <div
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-56 h-14 z-30 pointer-events-auto flex items-end justify-center pb-2 cursor-pointer group/trigger"
+                onMouseEnter={() => setIsHovered(true)}
+            >
+                {/* Subtle peek handle pill indicator */}
+                <div className="bg-white/90 backdrop-blur-md shadow-xl rounded-full px-4 py-1.5 text-xs font-semibold text-slate-700 flex items-center gap-2 border border-slate-200 group-hover/trigger:bg-white group-hover/trigger:scale-105 transition-all">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-600 animate-pulse" />
+                    <span>Browse Issues ({sortedReports.length})</span>
+                </div>
+            </div>
 
-                {/* Right Navigation Arrow (Desktop only) */}
-                <button
-                    type="button"
-                    onClick={handleScrollRight}
-                    aria-label="Scroll right"
-                    className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-xl border border-slate-200 text-slate-700 hover:bg-white hover:scale-105 active:scale-95 transition-all opacity-0 group-hover/carousel:opacity-100 backdrop-blur-sm"
-                >
-                    <ChevronRight className="h-5 w-5" />
-                </button>
+            {/* Carousel Container */}
+            <div
+                className={cn(
+                    "absolute bottom-5 z-40 transition-all duration-300 ease-in-out left-3 right-3 md:left-6",
+                    isSidePanelOpen ? "md:right-[424px]" : "md:right-6",
+                    isHovered
+                        ? "opacity-100 translate-y-0 pointer-events-auto"
+                        : "opacity-0 translate-y-6 pointer-events-none"
+                )}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                <div className="relative group/carousel max-w-7xl mx-auto">
+                    {/* Left Navigation Arrow (Desktop only) */}
+                    <button
+                        type="button"
+                        onClick={handleScrollLeft}
+                        aria-label="Scroll left"
+                        className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-xl border border-slate-200 text-slate-700 hover:bg-white hover:scale-105 active:scale-95 transition-all opacity-0 group-hover/carousel:opacity-100 backdrop-blur-sm"
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </button>
 
-                {/* Scrollable Cards Container with Edge Fade Mask */}
-                <div
-                    ref={scrollContainerRef}
-                    onMouseDown={handleMouseDown}
-                    className={cn(
-                        "relative overflow-hidden px-2 py-1 select-none cursor-grab active:cursor-grabbing",
-                        isDraggingState ? "cursor-grabbing" : ""
-                    )}
-                    style={{
-                        maskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
-                        WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
-                        scrollbarWidth: "none",
-                        msOverflowStyle: "none",
-                    }}
-                >
-                    <div className="flex items-center gap-4 py-2 px-3">
-                        {sortedReports.map((report) => {
-                            const isSelected = report.id === selectedReportId;
-                            const ProblemIcon = getIcon(report.problemType?.icon || "AlertCircle");
-                            const imageUrl = report.url || (report.media && report.media[0]?.url);
-                            const displayDate = new Date(report.publishedAt || report.createdAt).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                                hour: "numeric",
-                                minute: "2-digit",
-                            });
+                    {/* Right Navigation Arrow (Desktop only) */}
+                    <button
+                        type="button"
+                        onClick={handleScrollRight}
+                        aria-label="Scroll right"
+                        className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-xl border border-slate-200 text-slate-700 hover:bg-white hover:scale-105 active:scale-95 transition-all opacity-0 group-hover/carousel:opacity-100 backdrop-blur-sm"
+                    >
+                        <ChevronRight className="h-5 w-5" />
+                    </button>
 
-                            return (
-                                <div
-                                    key={report.id}
-                                    ref={(el) => {
-                                        if (el) cardRefs.current.set(report.id, el);
-                                        else cardRefs.current.delete(report.id);
-                                    }}
-                                    onClick={() => {
-                                        if (hasDraggedRef.current) return;
-                                        onReportSelect(report.id);
-                                    }}
-                                    className={cn(
-                                        "relative shrink-0 w-[220px] md:w-[280px] aspect-[4/3] rounded-2xl overflow-hidden shadow-xl cursor-pointer transition-all duration-300 group hover:scale-[1.03] hover:shadow-2xl bg-slate-900 border-2",
-                                        isSelected
-                                            ? "border-blue-500 ring-4 ring-blue-500/30 scale-[1.03] z-10"
-                                            : "border-white/80 hover:border-white"
-                                    )}
-                                >
-                                    {/* Card Image / Fallback */}
-                                    {imageUrl ? (
-                                        <Image
-                                            src={imageUrl}
-                                            alt={report.title}
-                                            fill
-                                            sizes="(max-width: 768px) 220px, 280px"
-                                            className="object-cover transition-transform duration-500 group-hover:scale-110 pointer-events-none"
-                                            draggable={false}
-                                        />
-                                    ) : (
-                                        <div
-                                            className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white pointer-events-none"
-                                            style={{ backgroundColor: report.category?.color || "#3b82f6" }}
-                                        >
-                                            <ProblemIcon size={32} className="text-white drop-shadow-md mb-1.5" />
-                                            <span className="text-xs font-semibold text-center drop-shadow">
-                                                {report.category?.name || "Issue"}
-                                            </span>
-                                        </div>
-                                    )}
+                    {/* Scrollable Cards Container with Edge Fade Mask */}
+                    <div
+                        ref={scrollContainerRef}
+                        onMouseDown={handleMouseDown}
+                        className={cn(
+                            "relative overflow-hidden px-2 py-1 select-none cursor-grab active:cursor-grabbing",
+                            isDraggingState ? "cursor-grabbing" : ""
+                        )}
+                        style={{
+                            maskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
+                            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
+                            scrollbarWidth: "none",
+                            msOverflowStyle: "none",
+                        }}
+                    >
+                        <div className="flex items-center gap-4 py-2 px-3">
+                            {sortedReports.map((report) => {
+                                const isSelected = report.id === selectedReportId;
+                                const ProblemIcon = getIcon(report.problemType?.icon || "AlertCircle");
+                                const imageUrl = report.url || (report.media && report.media[0]?.url);
+                                const displayDate = new Date(report.publishedAt || report.createdAt).toLocaleDateString(undefined, {
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                });
 
-                                    {/* Subtle dark gradient overlay for text readability */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40 pointer-events-none" />
-
-                                    {/* Content overlaid on image */}
-                                    <div className="absolute inset-0 p-3.5 flex flex-col justify-between pointer-events-none">
-                                        {/* Top: Title */}
-                                        <div>
-                                            <h3 className="text-white font-semibold text-sm md:text-base leading-snug line-clamp-2 drop-shadow-md">
-                                                {report.title}
-                                            </h3>
-                                        </div>
-
-                                        {/* Bottom: Timestamp & Status Badge */}
-                                        <div className="flex items-end justify-between gap-2">
-                                            <span className="text-white/90 text-[11px] md:text-xs font-medium drop-shadow-sm truncate">
-                                                {displayDate}
-                                            </span>
-
-                                            <span
-                                                className={cn(
-                                                    "px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold capitalize backdrop-blur-md shadow-sm shrink-0",
-                                                    statusColors[report.status] || "bg-slate-700/90 text-white"
-                                                )}
+                                return (
+                                    <div
+                                        key={report.id}
+                                        ref={(el) => {
+                                            if (el) cardRefs.current.set(report.id, el);
+                                            else cardRefs.current.delete(report.id);
+                                        }}
+                                        onClick={() => {
+                                            if (hasDraggedRef.current) return;
+                                            onReportSelect(report.id);
+                                        }}
+                                        className={cn(
+                                            "relative shrink-0 w-[220px] md:w-[280px] aspect-[4/3] rounded-2xl overflow-hidden shadow-xl cursor-pointer transition-all duration-300 group hover:scale-[1.03] hover:shadow-2xl bg-slate-900 border-2",
+                                            isSelected
+                                                ? "border-blue-500 ring-4 ring-blue-500/30 scale-[1.03] z-10"
+                                                : "border-white/80 hover:border-white"
+                                        )}
+                                    >
+                                        {/* Card Image / Fallback */}
+                                        {imageUrl ? (
+                                            <Image
+                                                src={imageUrl}
+                                                alt={report.title}
+                                                fill
+                                                sizes="(max-width: 768px) 220px, 280px"
+                                                className="object-cover transition-transform duration-500 group-hover:scale-110 pointer-events-none"
+                                                draggable={false}
+                                            />
+                                        ) : (
+                                            <div
+                                                className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white pointer-events-none"
+                                                style={{ backgroundColor: report.category?.color || "#3b82f6" }}
                                             >
-                                                {report.status.replace("_", " ")}
-                                            </span>
+                                                <ProblemIcon size={32} className="text-white drop-shadow-md mb-1.5" />
+                                                <span className="text-xs font-semibold text-center drop-shadow">
+                                                    {report.category?.name || "Issue"}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Subtle dark gradient overlay for text readability */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40 pointer-events-none" />
+
+                                        {/* Content overlaid on image */}
+                                        <div className="absolute inset-0 p-3.5 flex flex-col justify-between pointer-events-none">
+                                            {/* Top: Title */}
+                                            <div>
+                                                <h3 className="text-white font-semibold text-sm md:text-base leading-snug line-clamp-2 drop-shadow-md">
+                                                    {report.title}
+                                                </h3>
+                                            </div>
+
+                                            {/* Bottom: Timestamp & Status Badge */}
+                                            <div className="flex items-end justify-between gap-2">
+                                                <span className="text-white/90 text-[11px] md:text-xs font-medium drop-shadow-sm truncate">
+                                                    {displayDate}
+                                                </span>
+
+                                                <span
+                                                    className={cn(
+                                                        "px-2 py-0.5 rounded-full text-[10px] md:text-xs font-semibold capitalize backdrop-blur-md shadow-sm shrink-0",
+                                                        statusColors[report.status] || "bg-slate-700/90 text-white"
+                                                    )}
+                                                >
+                                                    {report.status.replace("_", " ")}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
