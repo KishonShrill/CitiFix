@@ -15,7 +15,7 @@ import { SidePanel } from "@/components/sidepanel/SidePanel";
 import { useReports, useReport, useDeleteReportAdmin, useCategories } from "@/hooks/useReports";
 import React, { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { Plus, HelpCircle } from "lucide-react";
+import { Plus, HelpCircle, Filter, X, Check } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { toast } from "sonner";
 
@@ -79,15 +79,15 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
   }, [selectedReportId]);
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const { data: categoriesData } = useCategories();
   const { data: reportsData, isFetching: reportsFetching } = useReports({ limit: 500 });
-  const reports = reportsData?.data;
 
   const filteredReports = React.useMemo(() => {
-    if (!reports) return [];
-    if (!selectedCategoryId) return reports;
-    return reports.filter((r) => r.category.id === selectedCategoryId);
-  }, [reports, selectedCategoryId]);
+    if (!reportsData?.data) return [];
+    if (!selectedCategoryId) return reportsData.data;
+    return reportsData?.data.filter((r) => r.category.id === selectedCategoryId);
+  }, [reportsData?.data, selectedCategoryId]);
 
   const deleteReportAdminMutation = useDeleteReportAdmin();
   const isStaff = !!user && ((user as any).role === "admin" || (user as any).role === "moderator");
@@ -218,16 +218,10 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
         </div>
       </div>
 
-      {/* Status Indicators & Category Filter Pills */}
-      <div className="absolute top-20 left-4 z-20 flex flex-col gap-2 max-w-[calc(100vw-8rem)]">
-        {reportsFetching && (
-          <div className="bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 w-fit">
-            Loading reports...
-          </div>
-        )}
-
-        {/* Category Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1" style={{ scrollbarWidth: "none" }}>
+      {/* Status Indicators & Category Filter Pills (Responsive) */}
+      <div className="absolute top-16 md:top-20 left-4 z-20 flex flex-col gap-2 max-w-[calc(100vw-10rem)]">
+        {/* Desktop Category Filter Pills */}
+        <div className="hidden md:flex flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar py-1" style={{ scrollbarWidth: "none" }}>
           <button
             onClick={() => setSelectedCategoryId(null)}
             className={cn(
@@ -262,7 +256,91 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
             );
           })}
         </div>
+
+        {/* Mobile Filter Toggle Button */}
+        <div className="flex md:hidden">
+          <button
+            onClick={() => setIsMobileFilterOpen(true)}
+            className="cursor-pointer flex items-center gap-2 px-3.5 py-2 bg-white text-slate-700 rounded-xl shadow-lg border border-slate-200 text-xs font-semibold hover:bg-slate-50 transition-colors"
+          >
+            <Filter size={15} className="text-orange-600" />
+            <span>Filter Categories</span>
+            {selectedCategoryId && (
+              <span className="w-2 h-2 rounded-full bg-orange-600" />
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Filter Bottom Sheet Modal */}
+      {isMobileFilterOpen && (
+        <div
+          className="fixed inset-0 z-70 bg-black/50 backdrop-blur-xs flex items-end justify-center md:hidden animate-in fade-in duration-200"
+          onClick={() => setIsMobileFilterOpen(false)}
+        >
+          <div
+            className="w-full bg-white rounded-t-3xl p-5 space-y-4 shadow-2xl border-t border-slate-200 max-h-[70dvh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-base">Filter by Category</h3>
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-full bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                onClick={() => {
+                  setSelectedCategoryId(null);
+                  setIsMobileFilterOpen(false);
+                }}
+                className={cn(
+                  "cursor-pointer p-3 rounded-xl text-xs font-semibold border text-left flex items-center justify-between transition-colors",
+                  selectedCategoryId === null
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                )}
+              >
+                <span>All Categories</span>
+                {selectedCategoryId === null && <Check size={14} />}
+              </button>
+
+              {categoriesData?.map((cat) => {
+                const isSelected = selectedCategoryId === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategoryId(cat.id);
+                      setIsMobileFilterOpen(false);
+                    }}
+                    className={cn(
+                      "cursor-pointer p-3 rounded-xl text-xs font-semibold border text-left flex items-center justify-between transition-colors",
+                      isSelected
+                        ? "text-white border-transparent shadow-sm"
+                        : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                    )}
+                    style={{ backgroundColor: isSelected ? cat.color : undefined }}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: isSelected ? "white" : cat.color }}
+                      />
+                      <span className="truncate">{cat.name}</span>
+                    </div>
+                    {isSelected && <Check size={14} className="shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Legend Button */}
       <button
@@ -286,7 +364,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
       {reportsData && (
         <div
           className={cn(
-            "absolute top-20 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20 transition-[right] duration-300 ease-in-out",
+            "absolute top-16 md:top-20 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20 transition-[right] duration-300 ease-in-out",
             isSidePanelOpen ? "right-[416px] max-sm:right-4" : "right-4"
           )}
         >
