@@ -12,338 +12,385 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LegendModal } from "@/components/common/LegendModal";
 import { SidePanel } from "@/components/sidepanel/SidePanel";
-import { useReports, useReport, useDeleteReportAdmin } from "@/hooks/useReports";
-import { useEffect, useState } from "react";
+import { useReports, useReport, useDeleteReportAdmin, useCategories } from "@/hooks/useReports";
+import React, { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Plus, HelpCircle } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { toast } from "sonner";
 
 export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: string }) {
-    const { data: session, isPending: isCheckingAuth } = authClient.useSession();
-    const user = session?.user;
+  const { data: session, isPending: isCheckingAuth } = authClient.useSession();
+  const user = session?.user;
 
-    const {
-        isLegendOpen, setIsLegendOpen,
-        isReportModalOpen, setIsReportModalOpen,
-        isPickingLocation, setIsPickingLocation,
-        pickedLocation, setPickedLocation,
-        isUserDashboardOpen, setIsUserDashboardOpen,
-        isAdminQueueOpen, setIsAdminQueueOpen,
-        isAuthModalOpen, setIsAuthModalOpen,
-        isSidePanelOpen, setIsSidePanelOpen,
-        sidePanelTab, setSidePanelTab,
-    } = useUI();
+  const {
+    isLegendOpen, setIsLegendOpen,
+    isReportModalOpen, setIsReportModalOpen,
+    isPickingLocation, setIsPickingLocation,
+    pickedLocation, setPickedLocation,
+    isUserDashboardOpen, setIsUserDashboardOpen,
+    isAdminQueueOpen, setIsAdminQueueOpen,
+    isAuthModalOpen, setIsAuthModalOpen,
+    isSidePanelOpen, setIsSidePanelOpen,
+    sidePanelTab, setSidePanelTab,
+  } = useUI();
 
-    const { selectedReportId, setSelectedReportId } = useMapState();
-    const { userLocation } = useUserLocation();
+  const { selectedReportId, setSelectedReportId } = useMapState();
+  const { userLocation } = useUserLocation();
 
-    // Deep link initialization state
-    const initialReportId = initialReportIdFromUrl || null;
-    const [hasDoneInitialPan, setHasDoneInitialPan] = useState(false);
-    const [panLocation, setPanLocation] = useState<{ lat: number, lng: number } | undefined>();
-    const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(null);
+  // Deep link initialization state
+  const initialReportId = initialReportIdFromUrl || null;
+  const [hasDoneInitialPan, setHasDoneInitialPan] = useState(false);
+  const [panLocation, setPanLocation] = useState<{ lat: number, lng: number } | undefined>();
+  const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
-    // If an initial report is set via props, initialize selectedReportId
-    useEffect(() => {
-        if (initialReportIdFromUrl && !hasDoneInitialPan) {
-            setSelectedReportId(initialReportIdFromUrl);
-        }
-    }, [initialReportIdFromUrl, hasDoneInitialPan, setSelectedReportId]);
+  // If an initial report is set via props, initialize selectedReportId
+  useEffect(() => {
+    if (initialReportIdFromUrl && !hasDoneInitialPan) {
+      setSelectedReportId(initialReportIdFromUrl);
+    }
+  }, [initialReportIdFromUrl, hasDoneInitialPan, setSelectedReportId]);
 
-    // Fetch the deep-linked report so we can pan to it
-    const { data: initialReportData } = useReport(
-        (!hasDoneInitialPan && initialReportId) ? initialReportId : ""
+  // Fetch the deep-linked report so we can pan to it
+  const { data: initialReportData } = useReport(
+    (!hasDoneInitialPan && initialReportId) ? initialReportId : ""
+  );
+
+  // Pan to the initial report when data arrives
+  useEffect(() => {
+    if (initialReportData && !hasDoneInitialPan) {
+      setPanLocation({ lat: initialReportData.latitude, lng: initialReportData.longitude });
+      setHasDoneInitialPan(true);
+    }
+  }, [initialReportData, hasDoneInitialPan]);
+
+  // Synchronize SPA URL state when selectedReportId changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const currentMatch = window.location.pathname.match(/^\/reports\/([^/]+)$/);
+    const currentUrlReportId = currentMatch ? currentMatch[1] : null;
+
+    if (selectedReportId && selectedReportId !== currentUrlReportId) {
+      window.history.pushState(null, '', `/reports/${selectedReportId}`);
+    } else if (!selectedReportId && currentUrlReportId) {
+      window.history.pushState(null, '', '/');
+    }
+  }, [selectedReportId]);
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const { data: categoriesData } = useCategories();
+  const { data: reportsData, isFetching: reportsFetching } = useReports({ limit: 500 });
+  const reports = reportsData?.data;
+
+  const filteredReports = React.useMemo(() => {
+    if (!reports) return [];
+    if (!selectedCategoryId) return reports;
+    return reports.filter((r) => r.category.id === selectedCategoryId);
+  }, [reports, selectedCategoryId]);
+
+  const deleteReportAdminMutation = useDeleteReportAdmin();
+  const isStaff = !!user && ((user as any).role === "admin" || (user as any).role === "moderator");
+
+  const handleDeleteReport = async () => {
+    if (!selectedReportId) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this report? This will permanently delete the report and all associated images."
     );
+    if (!confirmed) return;
 
-    // Pan to the initial report when data arrives
-    useEffect(() => {
-        if (initialReportData && !hasDoneInitialPan) {
-            setPanLocation({ lat: initialReportData.latitude, lng: initialReportData.longitude });
-            setHasDoneInitialPan(true);
-        }
-    }, [initialReportData, hasDoneInitialPan]);
+    try {
+      await deleteReportAdminMutation.mutateAsync(selectedReportId);
+      setSelectedReportId(null);
+      toast.success("Report deleted successfully");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to delete report");
+    }
+  };
 
-    // Synchronize SPA URL state when selectedReportId changes
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-
-        const currentMatch = window.location.pathname.match(/^\/reports\/([^/]+)$/);
-        const currentUrlReportId = currentMatch ? currentMatch[1] : null;
-
-        if (selectedReportId && selectedReportId !== currentUrlReportId) {
-            window.history.pushState(null, '', `/reports/${selectedReportId}`);
-        } else if (!selectedReportId && currentUrlReportId) {
-            window.history.pushState(null, '', '/');
-        }
-    }, [selectedReportId]);
-
-    const { data: reportsData, isFetching: reportsFetching } = useReports({ limit: 500 });
-    const deleteReportAdminMutation = useDeleteReportAdmin();
-    const isStaff = !!user && ((user as any).role === "admin" || (user as any).role === "moderator");
-
-    const handleDeleteReport = async () => {
-        if (!selectedReportId) return;
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this report? This will permanently delete the report and all associated images."
-        );
-        if (!confirmed) return;
-
-        try {
-            await deleteReportAdminMutation.mutateAsync(selectedReportId);
-            setSelectedReportId(null);
-            toast.success("Report deleted successfully");
-        } catch (error: any) {
-            toast.error(error?.message || "Failed to delete report");
-        }
-    };
-
-    const handleOpenReportModal = () => {
-        if (!user) {
-            setIsAuthModalOpen(true);
-            return;
-        }
-
-        setIsPickingLocation(true);
-        const centerToPick = currentMapCenter || { lat: userLocation[1], lng: userLocation[0] };
-        setPickedLocation(centerToPick);
-    };
-
-    if (isCheckingAuth) {
-        return (
-            <div className="w-full h-dvh flex flex-col gap-2 items-center justify-center bg-slate-50">
-                <Image
-                    src="/images/logos/betteriligan-logo.svg"
-                    alt="BetterIligan Logo"
-                    width={150}
-                    height={150}
-                    loading="eager"
-                    className="h-20 w-20 rounded-lg object-cover"
-                />
-                <p className="text-slate-600">Loading...</p>
-            </div>
-        );
+  const handleOpenReportModal = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
     }
 
+    setIsPickingLocation(true);
+    const centerToPick = currentMapCenter || { lat: userLocation[1], lng: userLocation[0] };
+    setPickedLocation(centerToPick);
+  };
+
+  if (isCheckingAuth) {
     return (
-        <main className="relative w-full h-dvh overflow-hidden">
-            {/* Map */}
-            <MapContainer
-                reports={reportsData?.data || []}
-                selectedReportId={selectedReportId || undefined}
-                onReportSelect={setSelectedReportId}
-                center={userLocation}
-                zoom={13}
-                flyToLocation={panLocation}
-                pinLocation={isPickingLocation ? (pickedLocation || undefined) : undefined}
-                onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
-                isReportModalOpen={isReportModalOpen}
-                onCenterChange={setCurrentMapCenter}
-            />
-
-            {/* Floating Issue Carousel */}
-            <ReportCarousel
-                reports={reportsData?.data || []}
-                selectedReportId={selectedReportId || undefined}
-                onReportSelect={setSelectedReportId}
-                isSidePanelOpen={isSidePanelOpen}
-            />
-
-            {/* Top Bar */}
-            <div className="md:bg-white absolute top-0 left-0 right-0 z-50 md:z-70 md:z-50 px-4 py-3 md:py-2 flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-white max-md:px-2 max-md:py-1 rounded-lg max-md:shadow-lg">
-                    <Image
-                        src="/images/logos/betteriligan-logo.svg"
-                        alt="BetterIligan Logo"
-                        width={75}
-                        height={75}
-                        loading="eager"
-                        className="h-10 w-10 max-md:hidden rounded-lg object-cover"
-                    />
-                    <Image
-                        src="/images/logos/betteriligan-logo.svg"
-                        alt="BetterIligan Logo"
-                        width={75}
-                        height={75}
-                        loading="eager"
-                        className="h-8 w-8 md:hidden rounded-lg object-cover"
-                    />
-                    <h1 className="font-bold text-slate-900 md:text-xl">CitiFix</h1>
-                </div>
-
-                <div className="flex items-center gap-2 z-70">
-                    {!isPickingLocation && (
-                        <button
-                            onClick={handleOpenReportModal}
-                            className="cursor-pointer shadow-lg max-md:hidden flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
-                        >
-                            <Plus size={16} />
-                            Report Issue
-                        </button>
-                    )}
-
-                    {user ? (
-                        <UserMenu
-                            user={user as any}
-                            isActive={isSidePanelOpen}
-                            onMyReportsClick={() => setIsUserDashboardOpen(true)}
-                            onAdminClick={() => setIsAdminQueueOpen(true)}
-                            onProfileClick={() => {
-                                if (isSidePanelOpen) {
-                                    setIsSidePanelOpen(false);
-                                } else {
-                                    setSidePanelTab("profile");
-                                    setIsSidePanelOpen(true);
-                                }
-                            }}
-                        />
-                    ) : (
-                        <button
-                            onClick={() => setIsAuthModalOpen(true)}
-                            className="cursor-pointer px-3 py-2 text-slate-900 border bg-white border-slate-300 rounded-md shadow-lg hover:bg-slate-50 text-sm font-medium"
-                        >
-                            Sign In
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Status Indicators */}
-            <div className="absolute top-20 left-4 flex flex-col gap-2 z-20">
-                {reportsFetching && (
-                    <div className="bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600">
-                        Loading reports...
-                    </div>
-                )}
-            </div>
-
-            {/* Legend Button */}
-            <button
-                onClick={() => setIsLegendOpen(true)}
-                className="cursor-pointer absolute bottom-5 left-4 flex items-center justify-center gap-1.5 h-11 min-w-11 md:p-4 bg-white text-slate-700 rounded-xl hover:bg-slate-200 shadow-xl font-bold transition-colors"
-            >
-                <HelpCircle className="h-5 w-5" />
-                <span className="max-md:hidden">Legend</span>
-            </button>
-
-            {/* Report Button */}
-            <button
-                onClick={handleOpenReportModal}
-                className="cursor-pointer absolute bottom-5 left-1/2 -translate-x-1/2 md:hidden flex p-5 bg-orange-600 text-white rounded-full hover:bg-orange-700 text-sm font-medium"
-            >
-                <Plus size={20} />
-            </button>
-
-
-
-            {reportsData && (
-                <div
-                    className={cn(
-                        "absolute top-20 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20 transition-[right] duration-300 ease-in-out",
-                        isSidePanelOpen ? "right-[416px] max-sm:right-4" : "right-4"
-                    )}
-                >
-                    {reportsData.data.length} report{reportsData.data.length !== 1 ? "s" : ""} visible
-                </div>
-            )}
-
-            {/* Modals & Overlays */}
-            {user && (
-                <ReportModal
-                    isOpen={isReportModalOpen}
-                    onClose={() => {
-                        setIsReportModalOpen(false);
-                        setIsPickingLocation(false);
-                        setPickedLocation(null);
-                    }}
-                    location={pickedLocation || undefined}
-                />
-            )}
-
-            {user && (
-                <SidePanel
-                    isOpen={isSidePanelOpen}
-                    onClose={() => {
-                        if (isSidePanelOpen) {
-                            setIsSidePanelOpen(false);
-                        } else {
-                            setSidePanelTab("profile");
-                            setIsSidePanelOpen(true);
-                        }
-                        console.log(isSidePanelOpen)
-                    }}
-                    activeTab={sidePanelTab}
-                    onTabChange={setSidePanelTab}
-                    user={user as any}
-                    onMyReportsClick={() => setIsUserDashboardOpen(true)}
-                    onAdminClick={() => setIsAdminQueueOpen(true)}
-                    onReportIssueClick={handleOpenReportModal}
-                />
-            )}
-
-            <LegendModal
-                isOpen={isLegendOpen}
-                onClose={() => setIsLegendOpen(false)}
-            />
-
-            {isPickingLocation && !isReportModalOpen && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-4 rounded-xl shadow-lg border border-slate-200 z-50 flex flex-col items-center gap-3 w-[90%] max-w-sm">
-                    <p className="text-sm font-medium text-slate-800 text-center">
-                        Drag the pin or tap the map to set the exact location
-                    </p>
-                    <div className="flex gap-2 w-full">
-                        <button
-                            onClick={() => {
-                                setIsPickingLocation(false);
-                                setPickedLocation(null);
-                            }}
-                            className="flex-1 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={() => setIsReportModalOpen(true)}
-                            disabled={!pickedLocation}
-                            className="flex-1 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50"
-                        >
-                            Confirm →
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <ReportSlideOut
-                isOpen={!!selectedReportId}
-                onClose={() => setSelectedReportId(null)}
-                onDelete={isStaff ? handleDeleteReport : undefined}
-                isDeleting={deleteReportAdminMutation.isPending}
-            />
-
-            {user && (
-                <UserDashboard
-                    isOpen={isUserDashboardOpen}
-                    onClose={() => setIsUserDashboardOpen(false)}
-                    onReportSelect={(id) => {
-                        setSelectedReportId(id);
-                        setIsUserDashboardOpen(false);
-                    }}
-                />
-            )}
-
-            {user && ((user as any).role === "admin" || (user as any).role === "moderator") && (
-                <AdminQueue
-                    isOpen={isAdminQueueOpen}
-                    onClose={() => setIsAdminQueueOpen(false)}
-                />
-            )}
-
-            <AuthModal
-                isOpen={isAuthModalOpen}
-                onClose={() => setIsAuthModalOpen(false)}
-                onSuccess={() => {
-                    window.location.reload();
-                }}
-            />
-        </main>
+      <div className="w-full h-dvh flex flex-col gap-2 items-center justify-center bg-slate-50">
+        <Image
+          src="/images/logos/betteriligan-logo.svg"
+          alt="BetterIligan Logo"
+          width={150}
+          height={150}
+          loading="eager"
+          className="h-20 w-20 rounded-lg object-cover"
+        />
+        <p className="text-slate-600">Loading...</p>
+      </div>
     );
+  }
+
+  return (
+    <main className="relative w-full h-dvh overflow-hidden">
+      {/* Map */}
+      <MapContainer
+        reports={filteredReports}
+        selectedReportId={selectedReportId || undefined}
+        onReportSelect={setSelectedReportId}
+        center={userLocation}
+        zoom={13}
+        flyToLocation={panLocation}
+        pinLocation={isPickingLocation ? (pickedLocation || undefined) : undefined}
+        onPinLocationChange={isPickingLocation ? ((lat, lng) => setPickedLocation({ lat, lng })) : undefined}
+        isReportModalOpen={isReportModalOpen}
+        onCenterChange={setCurrentMapCenter}
+      />
+
+      {/* Floating Issue Carousel */}
+      <ReportCarousel
+        reports={filteredReports}
+        selectedReportId={selectedReportId || undefined}
+        onReportSelect={setSelectedReportId}
+        isSidePanelOpen={isSidePanelOpen}
+      />
+
+      {/* Top Bar */}
+      <div className="md:bg-white absolute top-0 left-0 right-0 z-50 md:z-70 md:z-50 px-4 py-3 md:py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2 bg-white max-md:px-2 max-md:py-1 rounded-lg max-md:shadow-lg">
+          <Image
+            src="/images/logos/betteriligan-logo.svg"
+            alt="BetterIligan Logo"
+            width={75}
+            height={75}
+            loading="eager"
+            className="h-10 w-10 max-md:hidden rounded-lg object-cover"
+          />
+          <Image
+            src="/images/logos/betteriligan-logo.svg"
+            alt="BetterIligan Logo"
+            width={75}
+            height={75}
+            loading="eager"
+            className="h-8 w-8 md:hidden rounded-lg object-cover"
+          />
+          <h1 className="font-bold text-slate-900 md:text-xl">CitiFix</h1>
+        </div>
+
+        <div className="flex items-center gap-2 z-70">
+          {!isPickingLocation && (
+            <button
+              onClick={handleOpenReportModal}
+              className="cursor-pointer shadow-lg max-md:hidden flex items-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm font-medium"
+            >
+              <Plus size={16} />
+              Report Issue
+            </button>
+          )}
+
+          {user ? (
+            <UserMenu
+              user={user as any}
+              isActive={isSidePanelOpen}
+              onMyReportsClick={() => setIsUserDashboardOpen(true)}
+              onAdminClick={() => setIsAdminQueueOpen(true)}
+              onProfileClick={() => {
+                if (isSidePanelOpen) {
+                  setIsSidePanelOpen(false);
+                } else {
+                  setSidePanelTab("profile");
+                  setIsSidePanelOpen(true);
+                }
+              }}
+            />
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="cursor-pointer px-3 py-2 text-slate-900 border bg-white border-slate-300 rounded-md shadow-lg hover:bg-slate-50 text-sm font-medium"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Status Indicators & Category Filter Pills */}
+      <div className="absolute top-20 left-4 z-20 flex flex-col gap-2 max-w-[calc(100vw-8rem)]">
+        {reportsFetching && (
+          <div className="bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 w-fit">
+            Loading reports...
+          </div>
+        )}
+
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1" style={{ scrollbarWidth: "none" }}>
+          <button
+            onClick={() => setSelectedCategoryId(null)}
+            className={cn(
+              "cursor-pointer px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm border transition-colors shrink-0",
+              selectedCategoryId === null
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+            )}
+          >
+            All
+          </button>
+          {categoriesData?.map((cat) => {
+            const isSelected = selectedCategoryId === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategoryId(cat.id)}
+                className={cn(
+                  "cursor-pointer px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm border transition-colors flex items-center gap-1.5 shrink-0",
+                  isSelected
+                    ? "text-white border-transparent"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                )}
+                style={{ backgroundColor: isSelected ? cat.color : undefined }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: isSelected ? "white" : cat.color }}
+                />
+                <span>{cat.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend Button */}
+      <button
+        onClick={() => setIsLegendOpen(true)}
+        className="cursor-pointer absolute bottom-5 left-4 flex items-center justify-center gap-1.5 h-11 min-w-11 md:p-4 bg-white text-slate-700 rounded-xl hover:bg-slate-200 shadow-xl font-bold transition-colors"
+      >
+        <HelpCircle className="h-5 w-5" />
+        <span className="max-md:hidden">Legend</span>
+      </button>
+
+      {/* Report Button */}
+      <button
+        onClick={handleOpenReportModal}
+        className="cursor-pointer absolute bottom-5 left-1/2 -translate-x-1/2 md:hidden flex p-5 bg-orange-600 text-white rounded-full hover:bg-orange-700 text-sm font-medium"
+      >
+        <Plus size={20} />
+      </button>
+
+
+
+      {reportsData && (
+        <div
+          className={cn(
+            "absolute top-20 bg-white px-3 py-2 rounded-md shadow-sm text-sm text-slate-600 z-20 transition-[right] duration-300 ease-in-out",
+            isSidePanelOpen ? "right-[416px] max-sm:right-4" : "right-4"
+          )}
+        >
+          {filteredReports.length} report{filteredReports.length !== 1 ? "s" : ""} visible
+        </div>
+      )}
+
+      {/* Modals & Overlays */}
+      {user && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => {
+            setIsReportModalOpen(false);
+            setIsPickingLocation(false);
+            setPickedLocation(null);
+          }}
+          location={pickedLocation || undefined}
+        />
+      )}
+
+      {user && (
+        <SidePanel
+          isOpen={isSidePanelOpen}
+          onClose={() => {
+            if (isSidePanelOpen) {
+              setIsSidePanelOpen(false);
+            } else {
+              setSidePanelTab("profile");
+              setIsSidePanelOpen(true);
+            }
+            console.log(isSidePanelOpen)
+          }}
+          activeTab={sidePanelTab}
+          onTabChange={setSidePanelTab}
+          user={user as any}
+          onMyReportsClick={() => setIsUserDashboardOpen(true)}
+          onAdminClick={() => setIsAdminQueueOpen(true)}
+          onReportIssueClick={handleOpenReportModal}
+        />
+      )}
+
+      <LegendModal
+        isOpen={isLegendOpen}
+        onClose={() => setIsLegendOpen(false)}
+      />
+
+      {isPickingLocation && !isReportModalOpen && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white px-6 py-4 rounded-xl shadow-lg border border-slate-200 z-50 flex flex-col items-center gap-3 w-[90%] max-w-sm">
+          <p className="text-sm font-medium text-slate-800 text-center">
+            Drag the pin or tap the map to set the exact location
+          </p>
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={() => {
+                setIsPickingLocation(false);
+                setPickedLocation(null);
+              }}
+              className="flex-1 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => setIsReportModalOpen(true)}
+              disabled={!pickedLocation}
+              className="flex-1 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50"
+            >
+              Confirm →
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ReportSlideOut
+        isOpen={!!selectedReportId}
+        onClose={() => setSelectedReportId(null)}
+        onDelete={isStaff ? handleDeleteReport : undefined}
+        isDeleting={deleteReportAdminMutation.isPending}
+      />
+
+      {user && (
+        <UserDashboard
+          isOpen={isUserDashboardOpen}
+          onClose={() => setIsUserDashboardOpen(false)}
+          onReportSelect={(id) => {
+            setSelectedReportId(id);
+            setIsUserDashboardOpen(false);
+          }}
+        />
+      )}
+
+      {user && ((user as any).role === "admin" || (user as any).role === "moderator") && (
+        <AdminQueue
+          isOpen={isAdminQueueOpen}
+          onClose={() => setIsAdminQueueOpen(false)}
+        />
+      )}
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          window.location.reload();
+        }}
+      />
+    </main>
+  );
 }
