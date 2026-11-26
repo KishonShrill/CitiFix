@@ -27,10 +27,17 @@ export function ReportModal({
     const [currentPhase, setCurrentPhase] = useState<Phase>(1);
     const [selectedCategory, setSelectedCategory] = useState<string>("");
     const [problemTypeId, setProblemTypeId] = useState<string>("");
+    interface ProcessedFile {
+        dataUrl: string;
+        fileName: string;
+        fileType: string;
+        file: File;
+    }
+
     const [isDragging, setIsDragging] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadProgressText, setUploadProgressText] = useState<string>("");
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [selectedFiles, setSelectedFiles] = useState<ProcessedFile[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [formData, setFormData] = useState<{
         title: string;
@@ -54,11 +61,8 @@ export function ReportModal({
 
     // Object URL preview handling for photos
     useEffect(() => {
-        const urls = selectedFiles.map((file) => URL.createObjectURL(file));
+        const urls = selectedFiles.map((s) => s.dataUrl);
         setPreviewUrls(urls);
-        return () => {
-            urls.forEach((url) => URL.revokeObjectURL(url));
-        };
     }, [selectedFiles]);
 
     // Reset wizard when modal opens
@@ -78,11 +82,37 @@ export function ReportModal({
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const processAndSetFiles = async (filesList: FileList | File[]) => {
+        const processed: ProcessedFile[] = [];
+        for (const file of Array.from(filesList)) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const bytes = new Uint8Array(arrayBuffer);
+                let binary = "";
+                const len = bytes.byteLength;
+                const CHUNK_SIZE = 0x8000;
+                for (let j = 0; j < len; j += CHUNK_SIZE) {
+                    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(j, j + CHUNK_SIZE)) as number[]);
+                }
+                const base64 = btoa(binary);
+                const fileType = file.type || "image/jpeg";
+                const fileName = file.name || "photo.jpg";
+                const dataUrl = `data:${fileType};base64,${base64}`;
+                const blob = new Blob([bytes], { type: fileType });
+                const freshFile = new File([blob], fileName, { type: fileType });
+                processed.push({ dataUrl, fileName, fileType, file: freshFile });
+            } catch (err) {
+                console.error("Failed to process selected file immediately:", err);
+            }
+        }
+        const combined = [...selectedFiles, ...processed].slice(0, 3);
+        setSelectedFiles(combined);
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = validInputPhotos(e);
         if (files && files.length > 0) {
-            const combined = [...selectedFiles, ...Array.from(files)].slice(0, 3);
-            setSelectedFiles(combined);
+            await processAndSetFiles(files);
         }
     };
 
@@ -100,15 +130,14 @@ export function ReportModal({
         setIsDragging(false);
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files.length === 0) return;
 
         const files = validDraggedPhotos(e);
         if (files && files.length > 0) {
-            const combined = [...selectedFiles, ...Array.from(files)].slice(0, 3);
-            setSelectedFiles(combined);
+            await processAndSetFiles(files);
         }
     };
 
@@ -199,7 +228,7 @@ export function ReportModal({
                     severity: formData.severity,
                     latitude: location.lat,
                     longitude: location.lng,
-                }, selectedFiles);
+                }, selectedFiles.map((s) => ({ dataUrl: s.dataUrl, fileName: s.fileName, fileType: s.fileType })));
 
                 toast.success("Report saved on this device.", {
                     description: "We'll submit it automatically when you're back online.",
@@ -218,7 +247,7 @@ export function ReportModal({
                 severity: formData.severity,
                 latitude: location.lat,
                 longitude: location.lng,
-                files: selectedFiles,
+                files: selectedFiles.map((s) => s.file),
             });
 
             toast.success("Report submitted successfully with photos");
@@ -642,7 +671,7 @@ export function ReportModal({
                                                     </button>
                                                 </div>
                                                 <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-mono">
-                                                    {(file.size / (1024 * 1024)).toFixed(1)}MB
+                                                    {(file.file.size / (1024 * 1024)).toFixed(1)}MB
                                                 </div>
                                             </div>
                                         ))}

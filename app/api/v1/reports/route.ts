@@ -232,6 +232,9 @@ export async function POST(request: Request) {
     }
 
     // Validate files (at least 1 image is required, max 3)
+    if (files.length === 0) {
+        return sendError(400, "VALIDATION_ERROR", "At least 1 photo is required");
+    }
     if (files.length > 3) {
         return sendError(400, "VALIDATION_ERROR", "Maximum 3 photos allowed per report");
     }

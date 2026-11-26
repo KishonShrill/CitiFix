@@ -23,7 +23,7 @@ export interface PendingReport {
 export interface ReportAttachment {
     id: string;
     reportClientId: string;
-    blob: Blob;
+    dataUrl: string; // Base64 data URL immune to ArrayBuffer detachment on mobile
     fileName: string;
     fileType: string;
     displayOrder: number;

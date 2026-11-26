@@ -13,6 +13,8 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { LegendModal } from "@/components/common/LegendModal";
 import { SidePanel } from "@/components/sidepanel/SidePanel";
 import { SyncIndicator } from "@/components/offline/SyncIndicator";
+import { DebugLogsModal } from "@/components/offline/DebugLogsModal";
+import { IndexedDBInspectorModal } from "@/components/offline/IndexedDBInspectorModal";
 import { useReports, useReport, useDeleteReportAdmin, useCategories } from "@/hooks/useReports";
 import React, { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
@@ -42,6 +44,8 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
   // Deep link initialization state
   const initialReportId = initialReportIdFromUrl || null;
   const [hasDoneInitialPan, setHasDoneInitialPan] = useState(false);
+  const [isDebugLogsOpen, setIsDebugLogsOpen] = useState(false);
+  const [isIndexedDBOpen, setIsIndexedDBOpen] = useState(false);
   const [panLocation, setPanLocation] = useState<{ lat: number, lng: number } | undefined>();
   const [currentMapCenter, setCurrentMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -200,6 +204,8 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
               isActive={isSidePanelOpen}
               onMyReportsClick={() => setIsUserDashboardOpen(true)}
               onAdminClick={() => setIsAdminQueueOpen(true)}
+              onDebugLogsClick={() => setIsDebugLogsOpen(true)}
+              onIndexedDBClick={() => setIsIndexedDBOpen(true)}
               onProfileClick={() => {
                 if (isSidePanelOpen) {
                   setIsSidePanelOpen(false);
@@ -405,6 +411,8 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
           onMyReportsClick={() => setIsUserDashboardOpen(true)}
           onAdminClick={() => setIsAdminQueueOpen(true)}
           onReportIssueClick={handleOpenReportModal}
+          onDebugLogsClick={() => setIsDebugLogsOpen(true)}
+          onIndexedDBClick={() => setIsIndexedDBOpen(true)}
         />
       )}
 
@@ -470,6 +478,16 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
         onSuccess={() => {
           window.location.reload();
         }}
+      />
+
+      <DebugLogsModal
+        isOpen={isDebugLogsOpen}
+        onClose={() => setIsDebugLogsOpen(false)}
+      />
+
+      <IndexedDBInspectorModal
+        isOpen={isIndexedDBOpen}
+        onClose={() => setIsIndexedDBOpen(false)}
       />
     </main>
   );

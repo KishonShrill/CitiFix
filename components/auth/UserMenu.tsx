@@ -2,131 +2,149 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { LogOut, Shield, FileText, User as UserIcon } from "lucide-react";
+import { LogOut, Shield, FileText, User as UserIcon, Terminal, ListTodo, Database } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 interface User {
-    id: string;
-    name: string | null;
-    email: string;
-    role?: string;
+  id: string;
+  name: string | null;
+  email: string;
+  role?: string;
 }
 
 export interface UserMenuProps {
-    user: User | null;
-    onMyReportsClick?: () => void;
-    onAdminClick?: () => void;
-    onProfileClick?: () => void;
-    isActive?: boolean;
+  user: User | null;
+  onMyReportsClick?: () => void;
+  onAdminClick?: () => void;
+  onProfileClick?: () => void;
+  onDebugLogsClick?: () => void;
+  onIndexedDBClick?: () => void;
+  isActive?: boolean;
 }
 
-export function UserMenu({ user, onMyReportsClick, onAdminClick, onProfileClick, isActive }: UserMenuProps) {
-    const [isOpen, setIsOpen] = useState(false);
+export function UserMenu({ user, onMyReportsClick, onAdminClick, onProfileClick, onDebugLogsClick, onIndexedDBClick, isActive }: UserMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
 
-    const handleSignOut = async () => {
-        await authClient.signOut();
-        setIsOpen(false);
-        window.location.reload();
-    };
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    setIsOpen(false);
+    window.location.reload();
+  };
 
-    if (!user) {
-        return null;
-    }
+  if (!user) {
+    return null;
+  }
 
-    const isAdmin = user.role === "admin" || user.role === "moderator";
+  const isAdmin = user.role === "admin" || user.role === "moderator";
 
-    return (
-        <div className="relative">
-            <button
-                onClick={() => {
-                    if (onProfileClick) {
-                        onProfileClick();
-                    } else {
-                        setIsOpen((prev) => !prev);
-                    }
-                }}
-                className={`cursor-pointer text-sm flex items-center gap-2 px-3 py-1 rounded-lg shadow-lg transition-all ${
-                    isActive
-                        ? "bg-orange-50 text-orange-900 ring-2 ring-orange-500/80"
-                        : "bg-white text-slate-700 hover:bg-slate-100"
-                }`}
-            >
-                <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {user.name?.charAt(0).toUpperCase() || "U"}
-                </div>
-                {user.name}
-            </button>
-
-            {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
-                    <div className="px-4 py-3 border-b border-slate-200">
-                        <p className="font-medium text-slate-900">{user.name}</p>
-                        <p className="text-sm text-slate-600">{user.email}</p>
-                    </div>
-
-                    {onProfileClick && (
-                        <button
-                            onClick={() => {
-                                onProfileClick();
-                                setIsOpen(false);
-                            }}
-                            className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm flex items-center gap-2"
-                        >
-                            <UserIcon size={14} className="text-slate-400" />
-                            Account Profile
-                        </button>
-                    )}
-
-                    <button
-                        onClick={() => {
-                            onMyReportsClick?.();
-                            setIsOpen(false);
-                        }}
-                        className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm"
-                    >
-                        My Reports
-                    </button>
-
-                    {isAdmin && (
-                        <button
-                            onClick={() => {
-                                onAdminClick?.();
-                                setIsOpen(false);
-                            }}
-                            className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm font-medium border-t border-slate-200 text-orange-600"
-                        >
-                            Moderation Queue
-                        </button>
-                    )}
-
-                    <div className="border-t border-slate-200 py-1">
-                        <Link
-                            href="/privacy"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-2 px-4 py-1.5 text-slate-600 hover:bg-slate-50 text-xs"
-                        >
-                            <Shield size={14} className="text-slate-400" />
-                            Privacy Policy
-                        </Link>
-                        <Link
-                            href="/terms"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-2 px-4 py-1.5 text-slate-600 hover:bg-slate-50 text-xs"
-                        >
-                            <FileText size={14} className="text-slate-400" />
-                            Terms & Conditions
-                        </Link>
-                    </div>
-
-                    <button
-                        onClick={handleSignOut}
-                        className="cursor-pointer w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm border-t border-slate-200 flex items-center gap-2"
-                    >
-                        <LogOut size={16} />
-                        Sign Out
-                    </button>
-                </div>
-            )}
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`cursor-pointer text-sm flex items-center gap-2 px-3 py-1 rounded-lg shadow-lg transition-all ${isActive
+          ? "bg-orange-50 text-orange-900 ring-2 ring-orange-500/80"
+          : "bg-white text-slate-700 hover:bg-slate-100"
+          }`}
+      >
+        <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+          {user.name?.charAt(0).toUpperCase() || "U"}
         </div>
-    );
+        {user.name}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
+          <div className="px-4 py-3 border-b border-slate-200">
+            <p className="font-medium text-slate-900">{user.name}</p>
+            <p className="text-sm text-slate-600">{user.email}</p>
+          </div>
+
+          {onProfileClick && (
+            <button
+              onClick={() => {
+                onProfileClick();
+                setIsOpen(false);
+              }}
+              className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm flex items-center gap-2"
+            >
+              <UserIcon size={14} className="text-slate-400" />
+              Account Profile
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              onMyReportsClick?.();
+              setIsOpen(false);
+            }}
+            className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm flex items-center gap-2"
+          >
+            <ListTodo size={14} className="text-slate-400" />
+            My Reports
+          </button>
+
+          <button
+            onClick={() => {
+              onDebugLogsClick?.();
+              setIsOpen(false);
+            }}
+            className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm flex items-center gap-2 text-slate-700"
+          >
+            <Terminal size={14} className="text-orange-500" />
+            PWA Debug Logs
+          </button>
+
+          <button
+            onClick={() => {
+              onIndexedDBClick?.();
+              setIsOpen(false);
+            }}
+            className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm flex items-center gap-2 text-slate-700"
+          >
+            <Database size={14} className="text-blue-500" />
+            IndexedDB Storage
+          </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => {
+                onAdminClick?.();
+                setIsOpen(false);
+              }}
+              className="cursor-pointer w-full text-left px-4 py-2 text-slate-700 hover:bg-slate-50 text-sm font-medium border-t border-slate-200 text-orange-600"
+            >
+              Moderation Queue
+            </button>
+          )}
+
+          <div className="border-t border-slate-200 py-1">
+            <Link
+              href="/privacy"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 px-4 py-1.5 text-slate-600 hover:bg-slate-50 text-xs"
+            >
+              <Shield size={14} className="text-slate-400" />
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-2 px-4 py-1.5 text-slate-600 hover:bg-slate-50 text-xs"
+            >
+              <FileText size={14} className="text-slate-400" />
+              Terms & Conditions
+            </Link>
+          </div>
+
+          <button
+            onClick={handleSignOut}
+            className="cursor-pointer w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 text-sm border-t border-slate-200 flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
