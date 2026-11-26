@@ -12,6 +12,12 @@ export const metadata: Metadata = {
     template: "%s | CitiFIX BetterIligan",
   },
   description: "Civic reporting platform for Iligan City infrastructure issues",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CitiFIX",
+  },
   openGraph: {
     siteName: "CitiFIX BetterIligan",
     locale: "en_PH",
@@ -27,8 +33,8 @@ export const metadata: Metadata = {
   other: {
     "fb:app_id": "1036061575471786",
     "og:logo": "https://citifix.betteriligancity.org/icon.svg",
+    "theme-color": "#2563eb",
   },
-
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
