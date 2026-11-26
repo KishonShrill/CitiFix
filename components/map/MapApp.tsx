@@ -12,6 +12,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { LegendModal } from "@/components/common/LegendModal";
 import { SidePanel } from "@/components/sidepanel/SidePanel";
+import { SyncIndicator } from "@/components/offline/SyncIndicator";
 import { useReports, useReport, useDeleteReportAdmin, useCategories } from "@/hooks/useReports";
 import React, { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
@@ -81,7 +82,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const { data: categoriesData } = useCategories();
-  const { data: reportsData, isFetching: reportsFetching } = useReports({ limit: 500 });
+  const { data: reportsData } = useReports({ limit: 500 });
 
   const filteredReports = React.useMemo(() => {
     if (!reportsData?.data) return [];
@@ -160,7 +161,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
       />
 
       {/* Top Bar */}
-      <div className="md:bg-white absolute top-0 left-0 right-0 z-50 md:z-70 md:z-50 px-4 py-3 md:py-2 flex items-center justify-between">
+      <div id="header" className="md:bg-white absolute top-0 left-0 right-0 z-50 md:z-70 md:z-50 px-4 py-3 md:py-2 flex items-center justify-between">
         <div className="flex items-center gap-2 bg-white max-md:px-2 max-md:py-1 rounded-lg max-md:shadow-lg">
           <Image
             src="/images/logos/betteriligan-logo.svg"
@@ -182,6 +183,7 @@ export function MapApp({ initialReportIdFromUrl }: { initialReportIdFromUrl?: st
         </div>
 
         <div className="flex items-center gap-2 z-70">
+          <SyncIndicator />
           {!isPickingLocation && (
             <button
               onClick={handleOpenReportModal}

@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X, Upload, ArrowLeft, ArrowRight, Check, Trash2, MapPin, AlertTriangle, Layers, FileText } from "lucide-react";
-import { useCategories, useCategoryProblemTypes, useCreateReport } from "@/hooks/useReports";
-import type { CreateReportInput } from "@/lib/api/reports";
-import * as api from "@/lib/api/reports";
+import { useCategories, useProblemTypes, useCreateReport } from "@/hooks/useReports";
 import { toast } from "sonner";
 import { cn } from "@/utils/cn";
 import { isPointInPolygon } from "@/lib/geo";
 import { validInputPhotos, validDraggedPhotos } from "@/utils/fileChecker";
 import { getIcon } from "@/lib/icons";
+import { saveReportOffline } from "@/lib/offline/report-queue";
+import { checkServerReachability } from "@/lib/offline/connectivity";
 
 interface ReportModalProps {
     isOpen: boolean;
@@ -43,7 +43,8 @@ export function ReportModal({
     });
 
     const { data: categories, isLoading: categoriesLoading } = useCategories();
-    const { data: problemTypes, isLoading: problemTypesLoading } = useCategoryProblemTypes(selectedCategory);
+    const { data: allProblemTypes, isLoading: problemTypesLoading } = useProblemTypes();
+    const problemTypes = allProblemTypes?.filter((p) => p.categoryId === selectedCategory);
     const createReport = useCreateReport();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -184,6 +185,31 @@ export function ReportModal({
             }
 
             setUploadProgressText("Uploading images & creating report...");
+
+            // Check if online / reachable
+            const reachable = navigator.onLine && (await checkServerReachability());
+
+            if (!reachable) {
+                setUploadProgressText("Saving report locally (offline mode)...");
+                await saveReportOffline({
+                    categoryId: selectedCategory,
+                    problemTypeId,
+                    title: formData.title.trim(),
+                    description: formData.description.trim(),
+                    severity: formData.severity,
+                    latitude: location.lat,
+                    longitude: location.lng,
+                }, selectedFiles);
+
+                toast.success("Report saved on this device.", {
+                    description: "We'll submit it automatically when you're back online.",
+                });
+                setUploading(false);
+                setUploadProgressText("");
+                onClose();
+                return;
+            }
+
             await createReport.mutateAsync({
                 title: formData.title.trim(),
                 description: formData.description.trim(),
@@ -200,6 +226,31 @@ export function ReportModal({
             setUploadProgressText("");
             onClose();
         } catch (error) {
+            console.error("Submission error:", error);
+            // Fall back to saving offline if network error occurs
+            try {
+                setUploadProgressText("Network failed. Saving report locally...");
+                await saveReportOffline({
+                    categoryId: selectedCategory,
+                    problemTypeId,
+                    title: formData.title.trim(),
+                    description: formData.description.trim(),
+                    severity: formData.severity,
+                    latitude: location.lat,
+                    longitude: location.lng,
+                }, selectedFiles);
+
+                toast.success("Report saved on this device.", {
+                    description: "Network unavailable. We'll submit it automatically when connection returns.",
+                });
+                setUploading(false);
+                setUploadProgressText("");
+                onClose();
+                return;
+            } catch (offlineErr) {
+                console.error("Failed to save offline:", offlineErr);
+            }
+
             setUploading(false);
             setUploadProgressText("");
             toast.error(error instanceof Error ? error.message : "Failed to create report");

@@ -115,6 +115,7 @@ export async function POST(request: Request) {
     let problemTypeId = "";
     let title = "";
     let description = "";
+    let reportId = "";
     let latitude: number | undefined;
     let longitude: number | undefined;
     let address: string | undefined;
@@ -134,6 +135,7 @@ export async function POST(request: Request) {
         problemTypeId = (formData.get("problemTypeId") as string) || "";
         title = (formData.get("title") as string) || "";
         description = (formData.get("description") as string) || "";
+        reportId = (formData.get("id") as string) || "";
         const latStr = formData.get("latitude") as string;
         const lngStr = formData.get("longitude") as string;
         if (latStr) latitude = parseFloat(latStr);
@@ -162,11 +164,55 @@ export async function POST(request: Request) {
         problemTypeId = body.problemTypeId || "";
         title = body.title || "";
         description = body.description || "";
+        reportId = body.id || "";
         latitude = body.latitude;
         longitude = body.longitude;
         address = body.address;
         barangay = body.barangay;
         if (body.severity) severity = body.severity;
+    }
+
+    if (!reportId) {
+        reportId = nanoid(12);
+    }
+
+    // Idempotency check: check if report with this id already exists
+    try {
+        const [existing] = await db
+            .select({
+                id: report.id,
+                title: report.title,
+                description: report.description,
+                url: report.media,
+                latitude: report.latitude,
+                longitude: report.longitude,
+                address: report.address,
+                barangay: report.barangay,
+                severity: report.severity,
+                status: report.status,
+                createdAt: report.createdAt,
+                category: {
+                    id: category.id,
+                    name: category.name,
+                    color: category.color,
+                },
+                problemType: {
+                    id: problemType.id,
+                    name: problemType.name,
+                    icon: problemType.icon,
+                },
+            })
+            .from(report)
+            .innerJoin(category, eq(report.categoryId, category.id))
+            .innerJoin(problemType, eq(report.problemTypeId, problemType.id))
+            .where(eq(report.id, reportId))
+            .limit(1);
+
+        if (existing) {
+            return sendSuccess(existing, 200); // Idempotent return
+        }
+    } catch (idempErr) {
+        console.warn("Idempotency check error:", idempErr);
     }
 
     // Validate required fields
@@ -197,8 +243,8 @@ export async function POST(request: Request) {
         }
     }
 
-    // Generate unique public ID for the report
-    const publicId = nanoid(12);
+    // Use client-provided reportId or generated id
+    const publicId = reportId || nanoid(12);
 
     // 1. STEP 1: UPLOAD IMAGES TO CLOUDINARY FIRST (IF ANY FILES ATTACHED)
     const uploadedMedia: UploadedImage[] = [];
