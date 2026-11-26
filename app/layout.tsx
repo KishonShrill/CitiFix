@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { Providers } from "./providers";
-import { OfflineBanner } from "@/components/offline/OfflineBanner";
+import { OfflineToast } from "@/components/offline/OfflineToast";
+import { InstallPrompt } from "@/components/offline/InstallPrompt";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://citifix.betteriligancity.org"),
@@ -34,9 +35,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
+        <OfflineToast />
         <Providers>
           {children}
         </Providers>
+        <InstallPrompt />
         <Toaster className="max-md:hidden" position="bottom-right" richColors />
         <Toaster className="md:hidden" position="top-center" richColors />
       </body>
