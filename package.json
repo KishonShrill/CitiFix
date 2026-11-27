@@ -56,7 +56,7 @@
   "type": "module",
   "scripts": {
     "dev": "vinext dev --host 0.0.0.0 --port 3000",
-    "prebuild": "npm run cf-typegen",
+    "prebuild": "npm run cf-typegen && node scripts/generate-sw.mjs",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "deploy": "vinext-cloudflare deploy --config dist/server/wrangler.json",
