@@ -1,4 +1,7 @@
-const CACHE_NAME = "citifix-cache-v3";
+const BUILD_ID = "__CITIFIX_BUILD_ID__";
+const CACHE_NAME = `citifix-${BUILD_ID}`;
+const CACHE_PREFIX = "citifix-";
+
 const OFFLINE_URL = "/offline";
 
 const ASSETS_TO_CACHE = [
@@ -7,82 +10,96 @@ const ASSETS_TO_CACHE = [
   "/manifest.json",
   "/icon.png",
   "/icon.svg",
-  "/favicon.ico"
+  "/favicon.ico",
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName)) // Deletes old caches
+    caches.keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter(
+              (name) =>
+                name.startsWith(CACHE_PREFIX) &&
+                name !== CACHE_NAME
+            )
+            .map((name) => caches.delete(name)) // Deletes old caches
+        )
       )
-    ).then(() => self.clients.claim()) // Takes control of open pages immediately
+      .then(() => self.clients.claim()) // Takes control of open pages immediately
   );
 });
 
 self.addEventListener("fetch", (event) => {
+  const request = event.request;
   const url = new URL(event.request.url);
 
-  // Skip non-GET requests (e.g. POST report submissions handled by sync manager)
-  if (event.request.method !== "GET") {
-    return;
-  }
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
   // Handle navigation requests
-  if (event.request.mode === "navigate") {
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return caches.match(OFFLINE_URL) || caches.match("/");
-        })
+      fetch(request).catch(async () => {
+        return (
+          await caches.match(OFFLINE_URL)
+        ) || Response.error();
+      })
     );
     return;
   }
 
-  // Handle static assets and other GET requests
+  // Only cache static assets.
+  const cacheableDestinations = [
+    "style",
+    "script",
+    "image",
+    "font",
+  ];
+
+  if (!cacheableDestinations.includes(request.destination)) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch in background to update cache
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse);
-            });
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cachedResponse = await cache.match(request);
+
+      const networkRequest = fetch(request).then(
+        (response) => {
+          if (response.ok && response.type === "basic") {
+            cache.put(request, response.clone());
           }
-        }).catch(() => { });
+
+          return response;
+        }
+      );
+
+      if (cachedResponse) {
+        event.waitUntil(networkRequest.catch(() => { }));
         return cachedResponse;
       }
 
-      return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && url.protocol.startsWith("http")) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+      try {
+        return await networkRequest;
+      } catch {
+        if (request.destination === "image") {
+          return (
+            await cache.match("/icon.png")
+          ) || Response.error();
         }
-        return networkResponse;
-      }).catch(() => {
-        // Fallback for images or specific assets if needed
-        if (event.request.destination === "image") {
-          return caches.match("/icon.png");
-        }
-        return new Response("Network error happened", {
-          status: 408,
-          headers: { "Content-Type": "text/plain" },
-        });
-      });
-    })
+
+        return Response.error();
+      }
+    })()
   );
 });
