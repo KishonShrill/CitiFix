@@ -47,5 +47,25 @@
       "binding": "CITYFIX_KV_CACHE",
       "id": "e7016d7d9fe9448d929b38a1f7086b9b"
     }
-  ]
+  ],
+  "previews": {
+    "vars": {
+      "BETTER_AUTH_URL": "https://citifix.betteriligancity.org",
+      "SUPABASE_PUBLISHABLE": "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
+      "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "dlmabgte3",
+      "NEXT_PUBLIC_CLOUDINARY_API_KEY": "264546821783396"
+    },
+    "kv_namespaces": [
+      {
+        "binding": "CITIFIX_PREVIEW_KV_CACHE",
+        "id": "14689701e9a548678fb5234da7d40856"
+      }
+    ],
+    "images": {
+      "binding": "IMAGES"
+    },
+    "version_metadata": {
+      "binding": "CF_VERSION_METADATA"
+    }
+  }
 }
